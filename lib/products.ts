@@ -13,4 +13,8 @@ export type Product = {
   unit: string;
   description: string;
   stock: number;
+  is_featured?: boolean;
+  is_best_seller?: boolean;
+  meta_title?: string | null;
+  meta_description?: string | null;
 };

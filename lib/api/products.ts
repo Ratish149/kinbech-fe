@@ -1,4 +1,5 @@
 import type { Product } from "@/lib/products";
+import { getValidAccessToken } from "@/lib/auth";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000/api";
 
@@ -11,6 +12,7 @@ export type BackendProduct = {
   price: string | number;
   market_price?: string | number | null;
   image: string;
+  thumbnail_image?: string | null;
   images?: { id: number; image: string }[];
   unit: string;
   description?: string;
@@ -136,4 +138,110 @@ export async function fetchReviewsByProductSlug(slug: string): Promise<Review[]>
   const data = await res.json();
   return Array.isArray(data) ? data : (data.results ?? []);
 }
+
+export type ProductInput = {
+  name: string;
+  category: string; // expects slug
+  subcategory: string; // expects slug
+  price: number;
+  market_price?: number | null;
+  image?: string | null;
+  unit: string;
+  description?: string;
+  stock?: number;
+  is_featured?: boolean;
+  is_best_seller?: boolean;
+  meta_title?: string | null;
+  meta_description?: string | null;
+};
+
+export async function createProduct(formData: FormData): Promise<Product> {
+  const token = await getValidAccessToken();
+  if (!token) throw new Error("Unauthorized: No admin access token found.");
+
+  const res = await fetch(`${API_URL}/products/`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+    body: formData,
+  });
+
+  if (!res.ok) {
+    const errData = await res.json().catch(() => ({}));
+    throw new Error(errData.detail ?? JSON.stringify(errData) ?? "Failed to create product");
+  }
+
+  const p: BackendProduct = await res.json();
+  return {
+    id: String(p.id),
+    slug: p.slug,
+    name: p.name,
+    category: typeof p.category === "object" ? p.category.slug : p.category,
+    subcategory: typeof p.subcategory === "object" ? p.subcategory.slug : p.subcategory,
+    price: Number(p.price),
+    oldPrice: p.market_price ? Number(p.market_price) : undefined,
+    rating: p.average_rating ?? 0,
+    reviews: p.total_reviews ?? 0,
+    image: p.image || (p.thumbnail_image ? String(p.thumbnail_image) : ""),
+    images: p.images ?? [],
+    unit: p.unit,
+    description: p.description ?? "",
+    stock: p.stock ?? 0,
+  };
+}
+
+export async function updateProduct(slug: string, formData: FormData): Promise<Product> {
+  const token = await getValidAccessToken();
+  if (!token) throw new Error("Unauthorized: No admin access token found.");
+
+  const res = await fetch(`${API_URL}/products/${slug}/`, {
+    method: "PATCH",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+    body: formData,
+  });
+
+  if (!res.ok) {
+    const errData = await res.json().catch(() => ({}));
+    throw new Error(errData.detail ?? JSON.stringify(errData) ?? "Failed to update product");
+  }
+
+  const p: BackendProduct = await res.json();
+  return {
+    id: String(p.id),
+    slug: p.slug,
+    name: p.name,
+    category: typeof p.category === "object" ? p.category.slug : p.category,
+    subcategory: typeof p.subcategory === "object" ? p.subcategory.slug : p.subcategory,
+    price: Number(p.price),
+    oldPrice: p.market_price ? Number(p.market_price) : undefined,
+    rating: p.average_rating ?? 0,
+    reviews: p.total_reviews ?? 0,
+    image: p.image || (p.thumbnail_image ? String(p.thumbnail_image) : ""),
+    images: p.images ?? [],
+    unit: p.unit,
+    description: p.description ?? "",
+    stock: p.stock ?? 0,
+  };
+}
+
+export async function deleteProduct(slug: string): Promise<void> {
+  const token = await getValidAccessToken();
+  if (!token) throw new Error("Unauthorized: No admin access token found.");
+
+  const res = await fetch(`${API_URL}/products/${slug}/`, {
+    method: "DELETE",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  if (!res.ok) {
+    const errData = await res.json().catch(() => ({}));
+    throw new Error(errData.detail ?? JSON.stringify(errData) ?? "Failed to delete product");
+  }
+}
+
 

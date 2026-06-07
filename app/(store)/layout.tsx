@@ -6,7 +6,7 @@ import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { Toaster } from "@/components/ui/sonner";
 import { CartDrawer } from "@/components/CartDrawer";
-import "./globals.css";
+import "../globals.css";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -23,7 +23,7 @@ export const metadata: Metadata = {
   description: "Fresh meat, sukuti, vegetables and farm produce delivered from Nepali farmers to your home.",
 };
 
-export default function RootLayout({
+export default function StoreLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
@@ -47,5 +47,3 @@ export default function RootLayout({
     </html>
   );
 }
-
-
