@@ -8,7 +8,8 @@ export type Product = {
   oldPrice?: number;
   rating: number;
   reviews: number;
-  image: string;
+  thumbnail_image: string;
+  thumbnail_alt: string | null;
   images?: { id: number; image: string }[];
   unit: string;
   description: string;

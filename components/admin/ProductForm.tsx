@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Loader2, Trash2 } from "lucide-react";
 import { Field } from "@/components/admin/ui";
 import type { Product } from "@/lib/products";
@@ -26,11 +26,15 @@ export function ProductForm({
   // Category & dynamic subcategories selection state
   const [selectedCat, setSelectedCat] = useState("");
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
+  const [galleryFiles, setGalleryFiles] = useState<{ url: string; file: File }[]>([]);
+  const galleryInputRef = useRef<HTMLInputElement>(null);
 
-  // Set initial selected category
+  // Set initial selected category and image preview
   useEffect(() => {
     if (item) {
       setSelectedCat(item.category);
+      setPreviewImage(item.thumbnail_image ?? null);
     } else if (categories.length > 0) {
       setSelectedCat(categories[0].slug);
     }
@@ -41,16 +45,38 @@ export function ProductForm({
     return matched?.subs ?? [];
   };
 
-  return (
-    <form onSubmit={onSubmit} className="space-y-5">
-      {item?.image && (
-        <img
-          src={item.image}
-          className="w-full h-40 object-cover rounded-xl border bg-muted"
-          alt={item.name}
-        />
-      )}
+  const handleThumbnailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) setPreviewImage(URL.createObjectURL(file));
+  };
 
+  const handleMultiImagesChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files ?? []);
+    const newEntries = files.map((f) => ({ url: URL.createObjectURL(f), file: f }));
+    setGalleryFiles((prev) => [...prev, ...newEntries]);
+    // Reset input so same files can be re-added if needed
+    if (galleryInputRef.current) galleryInputRef.current.value = "";
+  };
+
+  const removeGalleryImage = (index: number) => {
+    setGalleryFiles((prev) => {
+      URL.revokeObjectURL(prev[index].url);
+      return prev.filter((_, i) => i !== index);
+    });
+  };
+
+  // Inject gallery files into FormData before submit
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    // Attach remaining gallery files back onto the form before calling onSubmit
+    const dt = new DataTransfer();
+    galleryFiles.forEach(({ file }) => dt.items.add(file));
+    if (galleryInputRef.current) galleryInputRef.current.files = dt.files;
+    await onSubmit(e);
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-5">
       <div className="grid grid-cols-1 gap-4">
         <Field label="Product Name *">
           <input
@@ -64,6 +90,7 @@ export function ProductForm({
 
         <div className="grid grid-cols-2 gap-3">
           <Field label="Category *">
+            <input type="hidden" name="category" value={selectedCat} />
             <select
               value={selectedCat}
               onChange={(e) => setSelectedCat(e.target.value)}
@@ -138,34 +165,102 @@ export function ProductForm({
               className="w-full border border-border rounded-lg px-3 py-2 text-[13px] focus:outline-none focus:ring-2 focus:ring-primary/20"
             />
           </Field>
-          <Field label="Image URL (Backup/Direct Link)">
-            <input
-              name="image"
-              defaultValue={item?.image ?? ""}
-              placeholder="Unsplash URL"
-              className="w-full border border-border rounded-lg px-3 py-2 text-[13px] focus:outline-none focus:ring-2 focus:ring-primary/20"
-            />
-          </Field>
+
         </div>
 
-        <div className="grid grid-cols-2 gap-3">
-          <Field label="Thumbnail Image (File)">
+        {/* Image uploads */}
+        <div className="space-y-3 rounded-xl border border-border p-3 bg-muted/20">
+          <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+            Images
+          </p>
+
+          {/* Thumbnail — previewed as a product card so user sees exact render */}
+          <div className="space-y-2">
+            <label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">
+              Thumbnail (Main Image)
+            </label>
             <input
               type="file"
               name="thumbnail_image"
               accept="image/*"
-              className="w-full text-[13px] border border-border rounded-lg px-3 py-1.5 cursor-pointer focus:outline-none file:mr-2 file:py-0.5 file:px-2 file:rounded-full file:border-0 file:text-[11px] file:bg-primary/10 file:text-primary"
+              onChange={handleThumbnailChange}
+              className="w-full text-[13px] border border-border rounded-lg px-3 py-1.5 bg-white cursor-pointer focus:outline-none file:mr-2 file:py-0.5 file:px-2 file:rounded-full file:border-0 file:text-[11px] file:bg-primary/10 file:text-primary"
             />
-          </Field>
-          <Field label="Product Images (Multiple Files)">
+            {/* Product card preview — matches exact ProductCard layout */}
+            {previewImage ? (
+              <div className="w-40 rounded-2xl border border-border overflow-hidden bg-white shadow-sm">
+                <div className="relative aspect-square overflow-hidden bg-muted">
+                  <img
+                    src={previewImage}
+                    alt="Thumbnail preview"
+                    className="w-full h-full object-cover"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setPreviewImage(null)}
+                    className="absolute top-1.5 right-1.5 bg-black/55 hover:bg-black/80 text-white rounded-full p-1 transition-colors"
+                    title="Remove thumbnail"
+                  >
+                    <Trash2 size={11} />
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="w-40 rounded-2xl border border-dashed border-border overflow-hidden bg-white">
+                <div className="aspect-square bg-muted/40 flex items-center justify-center">
+                  <p className="text-[10px] text-muted-foreground text-center px-2">No thumbnail</p>
+                </div>
+                <div className="p-2 space-y-1">
+                  <div className="h-2 bg-muted rounded w-3/4" />
+                  <div className="h-2.5 bg-muted rounded w-1/2" />
+                </div>
+              </div>
+            )}
+            <p className="text-[10px] text-muted-foreground">
+              Preview matches the product card shown in the store.
+            </p>
+          </div>
+
+          {/* Gallery images */}
+          <div className="space-y-2 border-t border-border pt-3">
+            <label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">
+              Gallery Images (Multiple)
+            </label>
             <input
+              ref={galleryInputRef}
               type="file"
               name="uploaded_images"
               accept="image/*"
               multiple
-              className="w-full text-[13px] border border-border rounded-lg px-3 py-1.5 cursor-pointer focus:outline-none file:mr-2 file:py-0.5 file:px-2 file:rounded-full file:border-0 file:text-[11px] file:bg-primary/10 file:text-primary"
+              onChange={handleMultiImagesChange}
+              className="w-full text-[13px] border border-border rounded-lg px-3 py-1.5 bg-white cursor-pointer focus:outline-none file:mr-2 file:py-0.5 file:px-2 file:rounded-full file:border-0 file:text-[11px] file:bg-primary/10 file:text-primary"
             />
-          </Field>
+            {galleryFiles.length > 0 && (
+              <div className="grid grid-cols-4 gap-2">
+                {galleryFiles.map(({ url }, i) => (
+                  <div key={url} className="relative aspect-square group/img">
+                    <img
+                      src={url}
+                      alt={`Image ${i + 1}`}
+                      className="w-full h-full object-cover rounded-lg border border-border"
+                    />
+                    {/* Delete overlay */}
+                    <button
+                      type="button"
+                      onClick={() => removeGalleryImage(i)}
+                      className="absolute inset-0 flex items-center justify-center bg-black/0 group-hover/img:bg-black/45 rounded-lg transition-all opacity-0 group-hover/img:opacity-100"
+                      title="Remove image"
+                    >
+                      <Trash2 size={16} className="text-white drop-shadow" />
+                    </button>
+                    <span className="absolute bottom-1 left-1 bg-black/50 text-white text-[9px] font-medium rounded px-1 pointer-events-none">
+                      {i + 1}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
 
         <div className="flex gap-5 py-1 text-[13px]">
