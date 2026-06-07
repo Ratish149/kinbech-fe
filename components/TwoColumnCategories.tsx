@@ -1,17 +1,17 @@
 import Link from "next/link";
-import { CATEGORIES } from "@/lib/products";
+import { fetchCategories } from "@/lib/api/categories";
+import type { Category } from "@/lib/types/category";
 
-const CAT_IMG: Record<string, string> = {
-  "fresh-meat": "https://images.unsplash.com/photo-1607623814075-e51df1bdc82f?auto=format&fit=crop&w=600&q=70",
-  "processed-meat": "https://images.unsplash.com/photo-1599583863916-e06c29087f51?auto=format&fit=crop&w=600&q=70",
-  "cooked-meat": "https://images.unsplash.com/photo-1626776876729-bab4369a5a5a?auto=format&fit=crop&w=600&q=70",
-  "sukuti": "https://images.unsplash.com/photo-1606851094291-6efae152bb87?auto=format&fit=crop&w=600&q=70",
-  "vegetables": "https://images.unsplash.com/photo-1576045057995-568f588f82fb?auto=format&fit=crop&w=600&q=70",
-  "farm-produce": "https://images.unsplash.com/photo-1587049352846-4a222e784d38?auto=format&fit=crop&w=600&q=70",
-};
 
-export function TwoColumnCategories() {
-  const pairs = CATEGORIES.slice(0, 4);
+export async function TwoColumnCategories() {
+  let categories: Category[] = [];
+  try {
+    categories = await fetchCategories();
+  } catch (error) {
+    console.error("Failed to fetch categories:", error);
+  }
+
+  const pairs = categories.slice(0, 4);
 
   return (
     <section className="container-x py-16">
@@ -22,11 +22,11 @@ export function TwoColumnCategories() {
         {pairs.map((c) => (
           <Link
             key={c.slug}
-            href={`/category/${c.slug}`}
+            href={`/product?category=${c.slug}`}
             className="relative h-56 rounded-3xl overflow-hidden group block"
           >
             <img
-              src={CAT_IMG[c.slug]}
+              src={c.image || "https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=600&q=70"}
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
               alt={c.name}
             />

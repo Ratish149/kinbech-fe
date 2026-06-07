@@ -1,8 +1,16 @@
 import Link from "next/link";
 import { Logo } from "./Header";
-import { CATEGORIES } from "@/lib/products";
+import { fetchCategories } from "@/lib/api/categories";
+import type { Category } from "@/lib/types/category";
 
-export function Footer() {
+export async function Footer() {
+  let categories: Category[] = [];
+  try {
+    categories = await fetchCategories();
+  } catch (error) {
+    console.error("Failed to fetch categories for footer:", error);
+  }
+
   return (
     <footer className="mt-24 border-t border-border bg-cream">
       <div className="container-x py-14 grid grid-cols-2 md:grid-cols-5 gap-8 text-[13px]">
@@ -18,9 +26,9 @@ export function Footer() {
         <div>
           <h4 className="font-serif text-[14px] font-semibold mb-3">Shop</h4>
           <ul className="space-y-2 text-muted-foreground">
-            {CATEGORIES.slice(0, 5).map((c) => (
+            {categories.slice(0, 5).map((c) => (
               <li key={c.slug}>
-                <Link href={`/category/${c.slug}`} className="hover:text-primary">
+                <Link href={`/product?category=${c.slug}`} className="hover:text-primary">
                   {c.name}
                 </Link>
               </li>

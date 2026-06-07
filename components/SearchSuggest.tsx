@@ -1,9 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { Search, TrendingUp } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Search, TrendingUp, Loader2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import { PRODUCTS, BEST_SELLERS } from "@/lib/products";
+import { useProducts } from "@/lib/hooks/useProducts";
 
 export function SearchSuggest({
   variant = "header",
@@ -12,6 +13,7 @@ export function SearchSuggest({
   variant?: "header" | "hero";
   placeholder?: string;
 }) {
+  const router = useRouter();
   const [q, setQ] = useState("");
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -24,17 +26,51 @@ export function SearchSuggest({
     return () => document.removeEventListener("mousedown", onDoc);
   }, []);
 
-  const trimmed = q.trim();
-  const matches = trimmed
-    ? PRODUCTS.filter((p) => p.name.toLowerCase().includes(trimmed.toLowerCase())).slice(0, 6)
-    : BEST_SELLERS.slice(0, 4);
+  // Debounce search input
+  const [debouncedQuery, setDebouncedQuery] = useState("");
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedQuery(q);
+    }, 300);
+    return () => clearTimeout(handler);
+  }, [q]);
+
+  const trimmed = debouncedQuery.trim();
+
+  // Query backend products dynamically based on search string
+  // If query is empty, suggest best sellers from backend
+  const { data: paginationData, isLoading: loadingProducts } = useProducts({
+    search: trimmed || undefined,
+    is_best_seller: trimmed ? undefined : true,
+    page_size: trimmed ? 6 : 4,
+  });
+
+  // Fallback query to get first 4 products if there are no best sellers in the backend database
+  const { data: fallbackData, isLoading: loadingFallback } = useProducts({
+    page_size: 4,
+  });
+
+  let matches = paginationData?.products ?? [];
+  if (!trimmed && matches.length === 0 && fallbackData?.products) {
+    matches = fallbackData.products;
+  }
+
   const heading = trimmed ? `Results for "${trimmed}"` : "Popular right now";
+  const isLoading = trimmed ? loadingProducts : (loadingProducts && loadingFallback);
+
+  const handleSearchSubmit = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (q.trim()) {
+      router.push(`/product?search=${encodeURIComponent(q.trim())}`);
+      setOpen(false);
+    }
+  };
 
   if (variant === "hero") return null;
 
   return (
     <div ref={ref} className="relative flex-1 max-w-sm mx-auto hidden lg:block">
-      <div className="flex items-center bg-muted rounded-full px-4 py-2 border border-border/50">
+      <form onSubmit={handleSearchSubmit} className="flex items-center bg-muted rounded-full px-4 py-2 border border-border/50">
         <Search size={15} className="text-muted-foreground shrink-0" />
         <input
           value={q}
@@ -46,14 +82,19 @@ export function SearchSuggest({
           placeholder={placeholder}
           className="bg-transparent w-full ml-2 outline-none text-[13px] text-foreground placeholder:text-muted-foreground"
         />
-      </div>
+      </form>
 
       {open && (
         <div className="absolute left-1/2 -translate-x-1/2 top-full mt-2 w-[420px] max-w-[92vw] bg-white border border-border rounded-2xl shadow-lg z-50 overflow-hidden text-left">
           <div className="flex items-center gap-2 px-4 py-2.5 border-b border-border/50 text-[11px] uppercase tracking-wide text-muted-foreground bg-zinc-50 font-semibold">
             <TrendingUp size={12} className="text-primary" /> {heading}
           </div>
-          {matches.length === 0 ? (
+          {isLoading ? (
+            <div className="py-8 flex flex-col items-center justify-center gap-2">
+              <Loader2 className="animate-spin text-primary" size={20} />
+              <span className="text-[12px] text-muted-foreground">Searching...</span>
+            </div>
+          ) : matches.length === 0 ? (
             <p className="px-4 py-6 text-[13px] text-muted-foreground text-center">
               No products found.
             </p>

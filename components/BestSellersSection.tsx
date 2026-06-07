@@ -2,12 +2,26 @@
 
 import { useRef } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { BEST_SELLERS } from "@/lib/products";
+import { useProducts } from "@/lib/hooks/useProducts";
 import { ProductCard } from "./ProductCard";
 
 export function BestSellersSection() {
   const ref = useRef<HTMLDivElement>(null);
   const scroll = (d: number) => ref.current?.scrollBy({ left: d, behavior: "smooth" });
+
+  const { data: paginationData } = useProducts({
+    is_best_seller: true,
+    page_size: 8,
+  });
+
+  const { data: fallbackData } = useProducts({
+    page_size: 8,
+  });
+
+  let products = paginationData?.products ?? [];
+  if (products.length === 0 && fallbackData?.products) {
+    products = fallbackData.products;
+  }
 
   return (
     <section className="container-x py-16">
@@ -36,8 +50,8 @@ export function BestSellersSection() {
         className="flex gap-4 overflow-x-auto scroll-smooth pb-2 -mx-5 px-5 snap-x scrollbar-none"
         style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
       >
-        {BEST_SELLERS.map((p) => (
-          <div key={p.id} className="min-w-[220px] max-w-[220px] snap-start">
+        {products.map((p) => (
+          <div key={p.id} className="min-w-[220px] max-w-[220px] snap-start flex flex-col">
             <ProductCard product={p} />
           </div>
         ))}

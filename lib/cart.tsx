@@ -5,33 +5,45 @@ import type { Product } from "./products";
 
 export type CartItem = {
   product: Product;
-  quantity: number;
+  qty: number;
 };
 
 type CartContextType = {
   items: CartItem[];
-  add: (product: Product) => void;
+  add: (product: Product, quantity?: number) => void;
   remove: (productId: string) => void;
   clear: () => void;
   totalQuantity: number;
-  totalPrice: number;
+  total: number;
   count: number;
-  isOpen: boolean;
+  open: boolean;
   setOpen: (open: boolean) => void;
+  setQty: (productId: string, qty: number) => void;
 };
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
 export function CartProvider({ children }: { children: React.ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([]);
-  const [isOpen, setOpen] = useState(false);
+  const [open, setOpen] = useState(false);
 
   // Load cart from localStorage on mount
   useEffect(() => {
     try {
       const saved = localStorage.getItem("kinbech_cart");
       if (saved) {
-        setItems(JSON.parse(saved));
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) {
+          const sanitized = parsed.map((item: unknown) => {
+            const it = item as { qty?: number; quantity?: number; product: Product };
+            return {
+              product: it.product,
+              qty: typeof it.qty === "number" ? it.qty : (typeof it.quantity === "number" ? it.quantity : 1),
+            };
+          });
+          // eslint-disable-next-line react-hooks/set-state-in-effect
+          setItems(sanitized);
+        }
       }
     } catch (e) {
       console.error("Failed to load cart", e);
@@ -47,18 +59,37 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     }
   }, [items]);
 
-  const add = (product: Product) => {
+  const add = (product: Product, quantity = 1) => {
     setItems((prev) => {
       const existing = prev.find((item) => item.product.id === product.id);
       if (existing) {
+        const newQty = existing.qty + quantity;
+        if (newQty <= 0) {
+          return prev.filter((item) => item.product.id !== product.id);
+        }
         return prev.map((item) =>
           item.product.id === product.id
-            ? { ...item, quantity: item.quantity + 1 }
+            ? { ...item, qty: newQty }
             : item
         );
       }
-      return [...prev, { product, quantity: 1 }];
+      if (quantity <= 0) return prev;
+      return [...prev, { product, qty: quantity }];
     });
+  };
+
+  const setQty = (productId: string, qty: number) => {
+    if (qty <= 0) {
+      remove(productId);
+      return;
+    }
+    setItems((prev) =>
+      prev.map((item) =>
+        item.product.id === productId
+          ? { ...item, qty }
+          : item
+      )
+    );
   };
 
   const remove = (productId: string) => {
@@ -69,9 +100,9 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     setItems([]);
   };
 
-  const totalQuantity = items.reduce((acc, item) => acc + item.quantity, 0);
+  const totalQuantity = items.reduce((acc, item) => acc + item.qty, 0);
   const totalPrice = items.reduce(
-    (acc, item) => acc + item.product.price * item.quantity,
+    (acc, item) => acc + item.product.price * item.qty,
     0
   );
 
@@ -83,10 +114,11 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         remove,
         clear,
         totalQuantity,
-        totalPrice,
+        total: totalPrice,
         count: totalQuantity,
-        isOpen,
+        open,
         setOpen,
+        setQty,
       }}
     >
       {children}
@@ -100,51 +132,4 @@ export function useCart() {
     throw new Error("useCart must be used within a CartProvider");
   }
   return context;
-}
-
-export function flyToCart(buttonElement: HTMLElement) {
-  if (typeof window === "undefined") return;
-
-  const startRect = buttonElement.getBoundingClientRect();
-  const target =
-    document.getElementById("cart-icon") ||
-    document.getElementById("header-cart-icon") ||
-    document.querySelector(".header-cart");
-
-  const targetX = target ? target.getBoundingClientRect().left : window.innerWidth - 80;
-  const targetY = target ? target.getBoundingClientRect().top : 30;
-
-  const flying = document.createElement("div");
-  flying.style.position = "fixed";
-  flying.style.left = `${startRect.left + startRect.width / 2 - 10}px`;
-  flying.style.top = `${startRect.top + startRect.height / 2 - 10}px`;
-  flying.style.width = "20px";
-  flying.style.height = "20px";
-  flying.style.borderRadius = "50%";
-  flying.style.backgroundColor = "#10b981"; // primary emerald green
-  flying.style.zIndex = "99999";
-  flying.style.pointerEvents = "none";
-  flying.style.transition = "all 0.7s cubic-bezier(0.25, 1, 0.5, 1)";
-  flying.style.boxShadow = "0 4px 10px rgba(16, 185, 129, 0.4)";
-  
-  document.body.appendChild(flying);
-
-  // Force reflow
-  flying.getBoundingClientRect();
-
-  // Animate to target
-  flying.style.left = `${targetX}px`;
-  flying.style.top = `${targetY}px`;
-  flying.style.transform = "scale(0.3)";
-  flying.style.opacity = "0.2";
-
-  setTimeout(() => {
-    flying.remove();
-    if (target) {
-      target.classList.add("scale-110", "bg-emerald-500", "text-white");
-      setTimeout(() => {
-        target.classList.remove("scale-110", "bg-emerald-500", "text-white");
-      }, 300);
-    }
-  }, 700);
 }

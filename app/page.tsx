@@ -1,10 +1,10 @@
-import { Hero } from "@/app/components/Hero";
-import { CategoriesStrip } from "@/app/components/CategoriesStrip";
-import { PopularProducts } from "@/app/components/PopularProducts";
-import { TwoColumnCategories } from "@/app/components/TwoColumnCategories";
-import { PromiseSection } from "@/app/components/PromiseSection";
-import { BestSellersSection } from "@/app/components/BestSellersSection";
-import { Testimonials } from "@/app/components/Testimonials";
+import { Hero } from "@/components/Hero";
+import { CategoriesStrip } from "@/components/CategoriesStrip";
+import { PopularProducts } from "@/components/PopularProducts";
+import { TwoColumnCategories } from "@/components/TwoColumnCategories";
+import { PromiseSection } from "@/components/PromiseSection";
+import { BestSellersSection } from "@/components/BestSellersSection";
+import { Testimonials } from "@/components/Testimonials";
 
 export default function Home() {
   return (
