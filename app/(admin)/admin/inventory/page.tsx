@@ -1,8 +1,8 @@
 "use client";
 
-import { Plus, Search, Loader2, ChevronLeft, ChevronRight, AlertTriangle } from "lucide-react";
+import { Plus, Search, AlertTriangle } from "lucide-react";
 import { useState, useEffect, useCallback } from "react";
-import { Badge, Field, PageHead, SlideOver, Table, useModal } from "@/components/admin/ui";
+import { PageHead, SlideOver, useModal } from "@/components/admin/ui";
 import type { Product } from "@/lib/products";
 import { fetchCategories } from "@/lib/api/categories";
 import {
@@ -14,6 +14,7 @@ import {
 import type { Category } from "@/lib/types/category";
 import { toast } from "sonner";
 import { ProductForm } from "@/components/admin/ProductForm";
+import { ProductTable } from "@/components/admin/ProductTable";
 
 export default function InventoryPage() {
   // Products & categories state
@@ -226,98 +227,15 @@ export default function InventoryPage() {
       )}
 
       {/* Products Table */}
-      {isLoading ? (
-        <div className="bg-white border border-border rounded-xl p-20 flex flex-col items-center justify-center gap-3">
-          <Loader2 className="animate-spin text-primary" size={24} />
-          <p className="text-[13px] text-muted-foreground">Loading products catalog...</p>
-        </div>
-      ) : (
-        <>
-          <Table
-            rows={products}
-            onRowClick={(prod) => editModal.openWith(prod)}
-            columns={[
-              {
-                key: "name",
-                label: "Product",
-                render: (p) => (
-                  <div className="flex items-center gap-3">
-                    <img
-                      src={p.thumbnail_image || "https://images.unsplash.com/photo-1607623814075-e51df1bdc82f?w=100"}
-                      className="w-9 h-9 rounded-lg object-cover bg-muted"
-                      alt={p.thumbnail_alt || ""}
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).src =
-                          "https://images.unsplash.com/photo-1607623814075-e51df1bdc82f?w=100";
-                      }}
-                    />
-                    <div>
-                      <span className="font-medium text-[13px] block">{p.name}</span>
-                      <span className="text-[10px] text-muted-foreground font-mono">slug: {p.slug}</span>
-                    </div>
-                  </div>
-                ),
-              },
-              {
-                key: "category",
-                label: "Category",
-                render: (p) => (
-                  <div className="space-y-0.5">
-                    <span className="capitalize text-[13px] block">{p.category.replace(/-/g, " ")}</span>
-                    <span className="text-[10px] text-muted-foreground capitalize block">
-                      {p.subcategory.replace(/-/g, " ")}
-                    </span>
-                  </div>
-                ),
-              },
-              { key: "price", label: "Price", render: (p) => `Rs ${p.price.toLocaleString()}` },
-              {
-                key: "stock",
-                label: "Stock",
-                render: (p) =>
-                  p.stock < 10 ? (
-                    <Badge tone="warn">{p.stock} units left</Badge>
-                  ) : (
-                    <span>
-                      {p.stock} {p.unit}
-                    </span>
-                  ),
-              },
-              {
-                key: "id",
-                label: "DB ID",
-                render: (p) => (
-                  <code className="text-[11px] text-muted-foreground font-semibold">#{p.id}</code>
-                ),
-              },
-            ]}
-          />
-
-          {totalPages > 1 && (
-            <div className="flex items-center justify-between pt-2">
-              <span className="text-[12px] text-muted-foreground">
-                Page {currentPage} of {totalPages} (Total {totalProducts} items)
-              </span>
-              <div className="flex items-center gap-2">
-                <button
-                  disabled={currentPage === 1}
-                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                  className="p-1.5 border border-border rounded-lg bg-white disabled:opacity-40 hover:bg-muted transition-colors"
-                >
-                  <ChevronLeft size={16} />
-                </button>
-                <button
-                  disabled={currentPage === totalPages}
-                  onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                  className="p-1.5 border border-border rounded-lg bg-white disabled:opacity-40 hover:bg-muted transition-colors"
-                >
-                  <ChevronRight size={16} />
-                </button>
-              </div>
-            </div>
-          )}
-        </>
-      )}
+      <ProductTable
+        products={products}
+        isLoading={isLoading}
+        onEdit={(prod) => editModal.openWith(prod)}
+        totalProducts={totalProducts}
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={(page) => setCurrentPage(page)}
+      />
 
       {/* Edit SlideOver */}
       <SlideOver
