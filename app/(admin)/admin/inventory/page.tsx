@@ -1,12 +1,13 @@
 "use client";
 
-import { Plus, Search, AlertTriangle } from "lucide-react";
+import { Plus, Search, AlertTriangle, Loader2 } from "lucide-react";
 import { useState, useEffect, useCallback } from "react";
-import { PageHead, SlideOver, useModal } from "@/components/admin/ui";
+import { PageHead, SlideOver } from "@/components/admin/ui";
 import type { Product } from "@/lib/products";
 import { fetchCategories } from "@/lib/api/categories";
 import {
   fetchProducts,
+  fetchProductBySlug,
   createProduct,
   updateProduct,
   deleteProduct,
@@ -33,8 +34,13 @@ export default function InventoryPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
 
-  // Modals state
-  const editModal = useModal<Product>();
+  // Edit slide-over state — fetch full product by slug on open
+  const [editOpen, setEditOpen] = useState(false);
+  const [editSlug, setEditSlug] = useState<string | null>(null);
+  const [fullEditProduct, setFullEditProduct] = useState<Product | null>(null);
+  const [isLoadingEdit, setIsLoadingEdit] = useState(false);
+
+  // Add slide-over state
   const [addOpen, setAddOpen] = useState(false);
 
   // Load categories and products
@@ -79,6 +85,29 @@ export default function InventoryPage() {
   const handleCategoryFilterChange = (val: string) => {
     setCategoryFilter(val);
     setCurrentPage(1);
+  };
+
+  // Open edit slide-over and fetch full product data by slug
+  const handleRowClick = async (product: Product) => {
+    setEditOpen(true);
+    setEditSlug(product.slug);
+    setFullEditProduct(null);
+    setIsLoadingEdit(true);
+    try {
+      const full = await fetchProductBySlug(product.slug);
+      setFullEditProduct(full);
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to load product details.");
+    } finally {
+      setIsLoadingEdit(false);
+    }
+  };
+
+  const closeEdit = () => {
+    setEditOpen(false);
+    setEditSlug(null);
+    setFullEditProduct(null);
   };
 
   // Shared FormData cleanup helper
@@ -127,16 +156,16 @@ export default function InventoryPage() {
   // Edit Product Submit
   const handleEditProduct = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!editModal.item) return;
+    if (!editSlug) return;
     setIsSubmitting(true);
 
     const formData = new FormData(e.currentTarget);
     cleanFormData(formData);
 
     try {
-      await updateProduct(editModal.item.slug, formData);
+      await updateProduct(editSlug, formData);
       toast.success("Product updated successfully!");
-      editModal.close();
+      closeEdit();
       loadProducts();
     } catch (err) {
       console.error(err);
@@ -148,12 +177,12 @@ export default function InventoryPage() {
 
   // Delete Product
   const handleDeleteProduct = async () => {
-    if (!editModal.item) return;
+    if (!editSlug) return;
     setIsSubmitting(true);
     try {
-      await deleteProduct(editModal.item.slug);
+      await deleteProduct(editSlug);
       toast.success("Product deleted successfully!");
-      editModal.close();
+      closeEdit();
       loadProducts();
     } catch (err) {
       console.error(err);
@@ -230,30 +259,35 @@ export default function InventoryPage() {
       <ProductTable
         products={products}
         isLoading={isLoading}
-        onEdit={(prod) => editModal.openWith(prod)}
+        onEdit={handleRowClick}
         totalProducts={totalProducts}
         currentPage={currentPage}
         totalPages={totalPages}
         onPageChange={(page) => setCurrentPage(page)}
       />
 
-      {/* Edit SlideOver */}
+      {/* Edit SlideOver — opens immediately, fetches full product in background */}
       <SlideOver
-        open={editModal.open}
-        onClose={editModal.close}
-        title={`Edit: ${editModal.item?.name ?? ""}`}
+        open={editOpen}
+        onClose={closeEdit}
+        title={fullEditProduct ? `Edit: ${fullEditProduct.name}` : "Loading product…"}
       >
-        {editModal.item && (
+        {isLoadingEdit ? (
+          <div className="flex flex-col items-center justify-center py-24 gap-3">
+            <Loader2 className="animate-spin text-primary" size={28} />
+            <p className="text-[13px] text-muted-foreground">Fetching product details…</p>
+          </div>
+        ) : fullEditProduct ? (
           <ProductForm
-            key={editModal.item.slug}
-            item={editModal.item}
+            key={fullEditProduct.slug}
+            item={fullEditProduct}
             categories={categories}
             onSubmit={handleEditProduct}
             isSubmitting={isSubmitting}
-            onCancel={editModal.close}
+            onCancel={closeEdit}
             onDelete={handleDeleteProduct}
           />
-        )}
+        ) : null}
       </SlideOver>
 
       {/* Add SlideOver */}

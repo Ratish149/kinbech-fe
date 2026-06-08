@@ -76,19 +76,25 @@ export function ProductTable({
             render: (p) =>
               p.stock < 10 ? (
                 <Badge tone="warn">{p.stock} units left</Badge>
-              ) : (
-                <span>
-                  {p.stock} {p.unit}
+              ) :(
+                 <span>
+                  {p.stock}
                 </span>
-              ),
+              ) 
+              
           },
           {
-            key: "id",
-            label: "DB ID",
-            render: (p) => (
-              <code className="text-[11px] text-muted-foreground font-semibold">#{p.id}</code>
-            ),
+            key: "unit",
+            label: "Unit",
+            render: (p) =>
+             
+                <span>
+                  {p.unit}
+                </span>
+              
           },
+
+          
         ]}
       />
 

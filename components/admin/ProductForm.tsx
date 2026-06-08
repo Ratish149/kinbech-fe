@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { Loader2, Trash2 } from "lucide-react";
+import { Loader2, Trash2, Images } from "lucide-react";
 import { Field } from "@/components/admin/ui";
 import type { Product } from "@/lib/products";
 import type { Category } from "@/lib/types/category";
@@ -27,14 +27,24 @@ export function ProductForm({
   const [selectedCat, setSelectedCat] = useState("");
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
+
+  // New gallery files staged for upload
   const [galleryFiles, setGalleryFiles] = useState<{ url: string; file: File }[]>([]);
   const galleryInputRef = useRef<HTMLInputElement>(null);
 
-  // Set initial selected category and image preview
+  // Existing saved gallery images from the API
+  const [existingImages, setExistingImages] = useState<{ id: number; image: string }[]>([]);
+  // IDs of existing images the user wants to delete on save
+  const [deletedImageIds, setDeletedImageIds] = useState<number[]>([]);
+
+  // Set initial selected category, thumbnail preview, and existing gallery
   useEffect(() => {
     if (item) {
       setSelectedCat(item.category);
       setPreviewImage(item.thumbnail_image ?? null);
+      setExistingImages(item.images ?? []);
+      setDeletedImageIds([]);
+      setGalleryFiles([]);
     } else if (categories.length > 0) {
       setSelectedCat(categories[0].slug);
     }
@@ -65,14 +75,36 @@ export function ProductForm({
     });
   };
 
-  // Inject gallery files into FormData before submit
+  const removeExistingImage = (id: number) => {
+    setExistingImages((prev) => prev.filter((img) => img.id !== id));
+    setDeletedImageIds((prev) => [...prev, id]);
+  };
+
+  // Inject gallery files and deleted IDs into FormData before submit
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    // Attach remaining gallery files back onto the form before calling onSubmit
+
+    // Attach remaining new gallery files back onto the form
     const dt = new DataTransfer();
     galleryFiles.forEach(({ file }) => dt.items.add(file));
     if (galleryInputRef.current) galleryInputRef.current.files = dt.files;
+
+    // Temporarily inject deleted_image_ids as hidden inputs
+    const form = e.currentTarget;
+    const tempInputs: HTMLInputElement[] = [];
+    deletedImageIds.forEach((id) => {
+      const input = document.createElement("input");
+      input.type = "hidden";
+      input.name = "deleted_image_ids";
+      input.value = String(id);
+      form.appendChild(input);
+      tempInputs.push(input);
+    });
+
     await onSubmit(e);
+
+    // Clean up temp inputs after submit
+    tempInputs.forEach((el) => form.removeChild(el));
   };
 
   return (
@@ -165,7 +197,6 @@ export function ProductForm({
               className="w-full border border-border rounded-lg px-3 py-2 text-[13px] focus:outline-none focus:ring-2 focus:ring-primary/20"
             />
           </Field>
-
         </div>
 
         {/* Image uploads */}
@@ -223,9 +254,42 @@ export function ProductForm({
 
           {/* Gallery images */}
           <div className="space-y-2 border-t border-border pt-3">
-            <label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">
-              Gallery Images (Multiple)
+            <label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide flex items-center gap-1.5">
+              <Images size={13} />
+              Gallery Images
             </label>
+
+            {/* Existing saved images from API */}
+            {existingImages.length > 0 && (
+              <div className="space-y-1.5">
+                <p className="text-[10px] text-muted-foreground font-medium">
+                  Saved ({existingImages.length}) — hover to remove
+                </p>
+                <div className="grid grid-cols-4 gap-2">
+                  {existingImages.map((img) => (
+                    <div key={img.id} className="relative aspect-square group/img">
+                      <img
+                        src={img.image}
+                        alt="Saved gallery image"
+                        className="w-full h-full object-cover rounded-lg border border-border"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => removeExistingImage(img.id)}
+                        className="absolute inset-0 flex items-center justify-center bg-black/0 group-hover/img:bg-black/50 rounded-lg transition-all opacity-0 group-hover/img:opacity-100"
+                        title="Remove image"
+                      >
+                        <Trash2 size={16} className="text-white drop-shadow" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {existingImages.length === 0 && !item && null}
+
+            {/* New uploads staged locally */}
             <input
               ref={galleryInputRef}
               type="file"
@@ -236,28 +300,32 @@ export function ProductForm({
               className="w-full text-[13px] border border-border rounded-lg px-3 py-1.5 bg-white cursor-pointer focus:outline-none file:mr-2 file:py-0.5 file:px-2 file:rounded-full file:border-0 file:text-[11px] file:bg-primary/10 file:text-primary"
             />
             {galleryFiles.length > 0 && (
-              <div className="grid grid-cols-4 gap-2">
-                {galleryFiles.map(({ url }, i) => (
-                  <div key={url} className="relative aspect-square group/img">
-                    <img
-                      src={url}
-                      alt={`Image ${i + 1}`}
-                      className="w-full h-full object-cover rounded-lg border border-border"
-                    />
-                    {/* Delete overlay */}
-                    <button
-                      type="button"
-                      onClick={() => removeGalleryImage(i)}
-                      className="absolute inset-0 flex items-center justify-center bg-black/0 group-hover/img:bg-black/45 rounded-lg transition-all opacity-0 group-hover/img:opacity-100"
-                      title="Remove image"
-                    >
-                      <Trash2 size={16} className="text-white drop-shadow" />
-                    </button>
-                    <span className="absolute bottom-1 left-1 bg-black/50 text-white text-[9px] font-medium rounded px-1 pointer-events-none">
-                      {i + 1}
-                    </span>
-                  </div>
-                ))}
+              <div className="space-y-1.5">
+                <p className="text-[10px] text-primary font-medium">
+                  New ({galleryFiles.length}) — will upload on save
+                </p>
+                <div className="grid grid-cols-4 gap-2">
+                  {galleryFiles.map(({ url }, i) => (
+                    <div key={url} className="relative aspect-square group/img">
+                      <img
+                        src={url}
+                        alt={`New image ${i + 1}`}
+                        className="w-full h-full object-cover rounded-lg border border-primary/40"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => removeGalleryImage(i)}
+                        className="absolute inset-0 flex items-center justify-center bg-black/0 group-hover/img:bg-black/50 rounded-lg transition-all opacity-0 group-hover/img:opacity-100"
+                        title="Remove image"
+                      >
+                        <Trash2 size={16} className="text-white drop-shadow" />
+                      </button>
+                      <span className="absolute bottom-1 left-1 bg-primary/80 text-white text-[9px] font-medium rounded px-1 pointer-events-none">
+                        new
+                      </span>
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
           </div>
