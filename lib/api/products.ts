@@ -11,14 +11,18 @@ export type BackendProduct = {
   subcategory: { id: string | number; slug: string; name: string } | string;
   price: string | number;
   market_price?: string | number | null;
-  image: string;
   thumbnail_image?: string | null;
+  thumbnail_alt?: string | null;
   images?: { id: number; image: string }[];
   unit: string;
   description?: string;
   stock?: number;
   average_rating?: number;
   total_reviews?: number;
+  is_featured?: boolean;
+  is_best_seller?: boolean;
+  meta_title?: string | null;
+  meta_description?: string | null;
 };
 
 export type ProductFilters = {
@@ -80,11 +84,17 @@ export async function fetchProducts(filters?: ProductFilters): Promise<Paginated
     oldPrice: p.market_price ? Number(p.market_price) : undefined,
     rating: p.average_rating ?? 0,
     reviews: p.total_reviews ?? 0,
-    image: p.image,
+    thumbnail_image: p.thumbnail_image ?? "",
+    thumbnail_alt: p.thumbnail_alt ?? null,
+    image: p.thumbnail_image ?? "",
     images: p.images ?? [],
     unit: p.unit,
     description: p.description ?? "",
     stock: p.stock ?? 0,
+    is_featured: p.is_featured,
+    is_best_seller: p.is_best_seller,
+    meta_title: p.meta_title ?? null,
+    meta_description: p.meta_description ?? null,
   }));
 
   return {
@@ -112,11 +122,17 @@ export async function fetchProductBySlug(slug: string): Promise<Product> {
     oldPrice: p.market_price ? Number(p.market_price) : undefined,
     rating: p.average_rating ?? 0,
     reviews: p.total_reviews ?? 0,
-    image: p.image,
+    thumbnail_image: p.thumbnail_image ?? "",
+    thumbnail_alt: p.thumbnail_alt ?? null,
+    image: p.thumbnail_image ?? "",
     images: p.images ?? [],
     unit: p.unit,
     description: p.description ?? "",
     stock: p.stock ?? 0,
+    is_featured: p.is_featured,
+    is_best_seller: p.is_best_seller,
+    meta_title: p.meta_title ?? null,
+    meta_description: p.meta_description ?? null,
   };
 }
 
@@ -183,11 +199,17 @@ export async function createProduct(formData: FormData): Promise<Product> {
     oldPrice: p.market_price ? Number(p.market_price) : undefined,
     rating: p.average_rating ?? 0,
     reviews: p.total_reviews ?? 0,
-    image: p.image || (p.thumbnail_image ? String(p.thumbnail_image) : ""),
+    thumbnail_image: p.thumbnail_image ?? "",
+    thumbnail_alt: p.thumbnail_alt ?? null,
+    image: p.thumbnail_image ?? "",
     images: p.images ?? [],
     unit: p.unit,
     description: p.description ?? "",
     stock: p.stock ?? 0,
+    is_featured: p.is_featured,
+    is_best_seller: p.is_best_seller,
+    meta_title: p.meta_title ?? null,
+    meta_description: p.meta_description ?? null,
   };
 }
 
@@ -219,11 +241,17 @@ export async function updateProduct(slug: string, formData: FormData): Promise<P
     oldPrice: p.market_price ? Number(p.market_price) : undefined,
     rating: p.average_rating ?? 0,
     reviews: p.total_reviews ?? 0,
-    image: p.image || (p.thumbnail_image ? String(p.thumbnail_image) : ""),
+    thumbnail_image: p.thumbnail_image ?? "",
+    thumbnail_alt: p.thumbnail_alt ?? null,
+    image: p.thumbnail_image ?? "",
     images: p.images ?? [],
     unit: p.unit,
     description: p.description ?? "",
     stock: p.stock ?? 0,
+    is_featured: p.is_featured,
+    is_best_seller: p.is_best_seller,
+    meta_title: p.meta_title ?? null,
+    meta_description: p.meta_description ?? null,
   };
 }
 

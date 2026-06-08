@@ -26,7 +26,10 @@ function ProductDetailContent({ slug }: { slug: string }) {
   // Combine main image and extra images
   const allImages = useMemo(() => {
     if (!product) return [];
-    const list = [product.image];
+    const list: string[] = [];
+    if (product.image) {
+      list.push(product.image);
+    }
     if (product.images) {
       product.images.forEach((imgObj) => {
         if (imgObj.image && imgObj.image !== product.image) {
