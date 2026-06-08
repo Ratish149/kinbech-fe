@@ -168,7 +168,7 @@ export default function POSPage() {
                 >
                   <div>
                     <img
-                      src={p.thumbnail_image || p.image || "https://images.unsplash.com/photo-1607623814075-e51df1bdc82f?w=200"}
+                      src={p.thumbnail_image  || "https://images.unsplash.com/photo-1607623814075-e51df1bdc82f?w=200"}
                       className="w-full aspect-square rounded-lg object-cover"
                       alt={p.name}
                       onError={(e) => {

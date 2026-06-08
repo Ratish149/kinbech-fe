@@ -27,12 +27,12 @@ function ProductDetailContent({ slug }: { slug: string }) {
   const allImages = useMemo(() => {
     if (!product) return [];
     const list: string[] = [];
-    if (product.image) {
-      list.push(product.image);
+    if (product.thumbnail_image) {
+      list.push(product.thumbnail_image);
     }
     if (product.images) {
       product.images.forEach((imgObj) => {
-        if (imgObj.image && imgObj.image !== product.image) {
+        if (imgObj.image && imgObj.image !== product.thumbnail_image) {
           list.push(imgObj.image);
         }
       });
@@ -40,7 +40,7 @@ function ProductDetailContent({ slug }: { slug: string }) {
     return list;
   }, [product]);
 
-  const mainImage = activeImage || product?.image;
+  const mainImage = activeImage || product?.thumbnail_image;
 
   // Fetch reviews data
   const { data: backendReviews = [], isLoading: loadingReviews } = useReviewsByProductSlug(slug);
@@ -125,7 +125,7 @@ function ProductDetailContent({ slug }: { slug: string }) {
         {/* Images */}
         <div className="md:sticky md:top-24 md:self-start space-y-3">
           <div className="aspect-square rounded-3xl overflow-hidden bg-muted">
-            <img src={mainImage} className="w-full h-full object-cover" alt={product.name} />
+            <img src={mainImage || "https://images.unsplash.com/photo-1607623814075-e51df1bdc82f?w=600"} className="w-full h-full object-cover" alt={product.thumbnail_alt || product.name} />
           </div>
           {allImages.length > 1 && (
             <div className="grid grid-cols-4 gap-2">
@@ -275,7 +275,7 @@ function ProductDetailContent({ slug }: { slug: string }) {
         {/* Sticky aside */}
         <aside className="md:sticky md:top-24 md:self-start border border-border rounded-2xl p-5 h-fit bg-white">
           <div className="flex gap-3">
-            <img src={product.image} className="w-20 h-20 rounded-xl object-cover" alt={product.name} />
+            <img src={product.thumbnail_image || "https://images.unsplash.com/photo-1607623814075-e51df1bdc82f?w=200"} className="w-20 h-20 rounded-xl object-cover" alt={product.thumbnail_alt || product.name} />
             <div className="flex-1">
               <p className="text-[14px] font-medium leading-snug">{product.name}</p>
               <p className="text-[12px] text-muted-foreground">{product.unit}</p>

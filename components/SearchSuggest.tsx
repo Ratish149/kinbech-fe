@@ -111,8 +111,8 @@ export function SearchSuggest({
                     className="flex items-center gap-3 px-4 py-2.5 hover:bg-cream transition duration-150"
                   >
                     <img
-                      src={p.image}
-                      alt=""
+                      src={p.thumbnail_image || "https://images.unsplash.com/photo-1607623814075-e51df1bdc82f?w=100"}
+                      alt={p.thumbnail_alt || p.name}
                       className="w-11 h-11 rounded-lg object-cover shrink-0 border border-zinc-150"
                     />
                     <div className="flex-1 min-w-0">

@@ -6,12 +6,12 @@ import { PageHead } from "@/components/admin/ui";
 import type { Product } from "@/lib/products";
 
 const MOCK_PRODUCTS: Product[] = [
-  { id: "1", slug: "fresh-mutton", name: "Fresh Mutton Curry Cut", category: "fresh-meat", subcategory: "goat", price: 1200, rating: 4.8, reviews: 32, image: "https://images.unsplash.com/photo-1607623814075-e51df1bdc82f?w=200", unit: "1 kg", description: "", stock: 45 },
-  { id: "2", slug: "whole-chicken", name: "Whole Dressed Chicken", category: "fresh-meat", subcategory: "chicken", price: 650, rating: 4.6, reviews: 18, image: "https://images.unsplash.com/photo-1587593810167-a84920ea0781?w=200", unit: "1 pc", description: "", stock: 12 },
-  { id: "3", slug: "buff-sukuti", name: "Buff Sukuti Premium", category: "sukuti", subcategory: "buff-sukuti", price: 1800, rating: 4.9, reviews: 54, image: "https://images.unsplash.com/photo-1544025162-d76694265947?w=200", unit: "500 g", description: "", stock: 8 },
-  { id: "4", slug: "pork-belly", name: "Pork Belly Sliced", category: "fresh-meat", subcategory: "pork", price: 850, rating: 4.5, reviews: 22, image: "https://images.unsplash.com/photo-1529193591184-b1d58069ecdd?w=200", unit: "500 g", description: "", stock: 20 },
-  { id: "5", slug: "goat-liver", name: "Goat Liver Fresh", category: "fresh-meat", subcategory: "goat", price: 550, rating: 4.3, reviews: 11, image: "https://images.unsplash.com/photo-1607623814075-e51df1bdc82f?w=200", unit: "500 g", description: "", stock: 30 },
-  { id: "6", slug: "chicken-sukuti", name: "Chicken Sukuti", category: "sukuti", subcategory: "chicken-sukuti", price: 900, rating: 4.7, reviews: 41, image: "https://images.unsplash.com/photo-1587593810167-a84920ea0781?w=200", unit: "250 g", description: "", stock: 15 },
+  { id: "1", slug: "fresh-mutton", name: "Fresh Mutton Curry Cut", category: "fresh-meat", subcategory: "goat", price: 1200, rating: 4.8, reviews: 32, thumbnail_image: "https://images.unsplash.com/photo-1607623814075-e51df1bdc82f?w=200", unit: "1 kg", description: "", stock: 45 },
+  { id: "2", slug: "whole-chicken", name: "Whole Dressed Chicken", category: "fresh-meat", subcategory: "chicken", price: 650, rating: 4.6, reviews: 18, thumbnail_image: "https://images.unsplash.com/photo-1587593810167-a84920ea0781?w=200", unit: "1 pc", description: "", stock: 12 },
+  { id: "3", slug: "buff-sukuti", name: "Buff Sukuti Premium", category: "sukuti", subcategory: "buff-sukuti", price: 1800, rating: 4.9, reviews: 54, thumbnail_image: "https://images.unsplash.com/photo-1544025162-d76694265947?w=200", unit: "500 g", description: "", stock: 8 },
+  { id: "4", slug: "pork-belly", name: "Pork Belly Sliced", category: "fresh-meat", subcategory: "pork", price: 850, rating: 4.5, reviews: 22, thumbnail_image: "https://images.unsplash.com/photo-1529193591184-b1d58069ecdd?w=200", unit: "500 g", description: "", stock: 20 },
+  { id: "5", slug: "goat-liver", name: "Goat Liver Fresh", category: "fresh-meat", subcategory: "goat", price: 550, rating: 4.3, reviews: 11, thumbnail_image: "https://images.unsplash.com/photo-1607623814075-e51df1bdc82f?w=200", unit: "500 g", description: "", stock: 30 },
+  { id: "6", slug: "chicken-sukuti", name: "Chicken Sukuti", category: "sukuti", subcategory: "chicken-sukuti", price: 900, rating: 4.7, reviews: 41, thumbnail_image: "https://images.unsplash.com/photo-1587593810167-a84920ea0781?w=200", unit: "250 g", description: "", stock: 15 },
 ];
 
 export default function BarcodesPage() {

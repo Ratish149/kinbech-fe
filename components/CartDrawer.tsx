@@ -32,7 +32,7 @@ export function CartDrawer() {
           )}
           {items.map((it) => (
             <div key={it.product.id} className="flex gap-3">
-              <img src={it.product.image} alt={it.product.name} className="w-20 h-20 rounded-lg object-cover" />
+              <img src={it.product.thumbnail_image || "https://images.unsplash.com/photo-1607623814075-e51df1bdc82f?w=200"} alt={it.product.thumbnail_alt || it.product.name} className="w-20 h-20 rounded-lg object-cover" />
               <div className="flex-1">
                 <p className="text-[14px] font-medium leading-snug">{it.product.name}</p>
                 <p className="text-[12px] text-muted-foreground">{it.product.unit}</p>

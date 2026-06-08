@@ -328,8 +328,8 @@ export default function CheckoutPage() {
                 <div key={it.product.id} className="flex gap-3 text-[13px] items-start">
                   <div className="relative shrink-0">
                     <img
-                      src={it.product.image}
-                      alt={it.product.name}
+                      src={it.product.thumbnail_image || "https://images.unsplash.com/photo-1607623814075-e51df1bdc82f?w=200"}
+                      alt={it.product.thumbnail_alt || it.product.name}
                       className="w-16 h-16 rounded-xl object-cover border border-zinc-100"
                     />
                     {discount > 0 && (

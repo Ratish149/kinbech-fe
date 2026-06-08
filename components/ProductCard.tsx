@@ -13,7 +13,7 @@ export function ProductCard({ product }: { product: Product }) {
       <Link href={`/product/${product.slug}`} className="block">
         <div className="aspect-square overflow-hidden bg-muted">
           <img
-            src={product.thumbnail_image ?? "https://images.unsplash.com/photo-1607623814075-e51df1bdc82f?w=400"}
+            src={product.thumbnail_image || "https://images.unsplash.com/photo-1607623814075-e51df1bdc82f?w=400"}
             alt={product.thumbnail_alt || product.name}
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
             loading="lazy"

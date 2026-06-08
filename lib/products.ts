@@ -10,7 +10,6 @@ export type Product = {
   reviews: number;
   thumbnail_image?: string;
   thumbnail_alt?: string | null;
-  image?: string;
   images?: { id: number; image: string }[];
   unit: string;
   description: string;
