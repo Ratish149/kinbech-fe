@@ -18,7 +18,6 @@ import {
   Loader2,
   Search,
 } from "lucide-react";
-import { Logo } from "@/components/Header";
 
 type PageProps = {
   params: Promise<{ id: string }>;
@@ -118,6 +117,8 @@ export default function TrackOrderPage({ params }: PageProps) {
     PhonePay: "PhonePay QR Scan",
   };
 
+  const isOnlinePayment = order.payment_method !== "COD";
+
   return (
     <div className="min-h-screen bg-zinc-50/50 py-12">
       <div className="container-x max-w-4xl space-y-8">
@@ -137,11 +138,33 @@ export default function TrackOrderPage({ params }: PageProps) {
         </div>
 
         {/* Header Summary Box */}
-        <div className="bg-white border border-border rounded-3xl p-6 sm:p-8 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-6">
-          <div className="space-y-2">
-            <h1 className="font-serif text-2xl sm:text-3xl font-bold text-zinc-950">Thank you for your order!</h1>
-            <p className="text-[13px] text-muted-foreground">
-              Your order is currently <span className="text-primary font-semibold capitalize">{order.status}</span>.
+        <div className={`bg-white border rounded-3xl p-6 sm:p-8 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-6 transition-all duration-300 ${
+          isCancelled ? "border-rose-100 bg-gradient-to-br from-white to-rose-50/10" : "border-border"
+        }`}>
+          <div className="space-y-2.5">
+            <div className="flex items-center gap-3">
+              <h1 className="font-serif text-2xl sm:text-3xl font-bold text-zinc-950">
+                {isCancelled ? "Order Cancelled" : "Thank you for your order!"}
+              </h1>
+              {isCancelled && (
+                <span className="bg-rose-50 text-rose-600 border border-rose-100 text-[11px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full">
+                  Cancelled
+                </span>
+              )}
+            </div>
+            <p className="text-[13px] text-muted-foreground flex items-center gap-1.5 flex-wrap">
+              <span>Your order</span>
+              <span className="font-mono font-bold text-zinc-800 bg-zinc-50 border px-2 py-0.5 rounded-lg text-[12px]">
+                #{order.order_id}
+              </span>
+              {isCancelled ? (
+                <span>has been cancelled and is no longer active.</span>
+              ) : (
+                <>
+                  <span>is currently</span>
+                  <span className="font-bold capitalize text-primary">{order.status}</span>.
+                </>
+              )}
             </p>
           </div>
           <div className="flex flex-col gap-1 text-[13px] md:text-right text-zinc-600">
@@ -159,29 +182,30 @@ export default function TrackOrderPage({ params }: PageProps) {
               </span>
             </div>
             <div className="flex md:justify-end items-center gap-2 mt-1">
-              <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
-              <span>Real-time tracking enabled</span>
+              <span className={`w-2.5 h-2.5 rounded-full ${isCancelled ? "bg-rose-400" : "bg-emerald-500 animate-pulse"}`} />
+              <span>{isCancelled ? "Tracking Suspended" : "Real-time tracking enabled"}</span>
             </div>
           </div>
         </div>
 
-        {/* Timeline Tracking Section */}
-        <div className="bg-white border border-border rounded-3xl p-6 sm:p-8 shadow-sm space-y-8">
-          <h2 className="font-sans text-[15px] font-bold uppercase tracking-wider text-zinc-800">
-            Tracking Timeline
-          </h2>
-
-          {isCancelled ? (
-            <div className="bg-red-50 border border-red-200 rounded-2xl p-5 flex items-start gap-4 text-red-950">
-              <AlertCircle className="text-red-500 shrink-0 mt-0.5" size={20} />
-              <div className="space-y-1">
-                <p className="font-bold text-[14px]">Order Cancelled</p>
-                <p className="text-[13px] text-red-900/90 leading-relaxed">
-                  This order was cancelled. If you believe this was an error, please reach out to our customer support.
-                </p>
-              </div>
+        {/* Cancelled Info or Timeline Section */}
+        {isCancelled ? (
+          <div className="bg-rose-50/30 border border-rose-100 rounded-3xl p-6 sm:p-8 flex items-center gap-4 text-left">
+            <div className="w-10 h-10 rounded-full bg-rose-50 border border-rose-100 flex items-center justify-center text-rose-500 shrink-0">
+              <AlertCircle size={20} />
             </div>
-          ) : (
+            <div className="space-y-1">
+              <h2 className="font-sans text-[14px] font-bold text-rose-950">Order Cancelled</h2>
+              <p className="text-[13px] text-rose-800/80 leading-relaxed">
+                This order was cancelled. If you believe this was an error or paid online, please contact our support.
+              </p>
+            </div>
+          </div>
+        ) : (
+          <div className="bg-white border border-border rounded-3xl p-6 sm:p-8 shadow-sm space-y-8">
+            <h2 className="font-sans text-[15px] font-bold uppercase tracking-wider text-zinc-800">
+              Tracking Timeline
+            </h2>
             <div className="relative grid grid-cols-1 md:grid-cols-4 gap-6 pt-2">
               {STEPS.map((step, idx) => {
                 const StepIcon = step.icon;
@@ -241,14 +265,16 @@ export default function TrackOrderPage({ params }: PageProps) {
                 );
               })}
             </div>
-          )}
-        </div>
+          </div>
+        )}
 
         {/* Two column grid details */}
         <div className="grid md:grid-cols-5 gap-8 items-start">
           
           {/* Order Summary & Items List */}
-          <div className="md:col-span-3 bg-white border border-border rounded-3xl p-6 shadow-sm space-y-6">
+          <div className={`bg-white border rounded-3xl p-6 shadow-sm space-y-6 md:col-span-3 transition-colors duration-300 ${
+            isCancelled ? "border-rose-100/50" : "border-border"
+          }`}>
             <h2 className="font-sans text-[15px] font-bold uppercase tracking-wider text-zinc-800">
               Order Items
             </h2>
@@ -259,7 +285,7 @@ export default function TrackOrderPage({ params }: PageProps) {
                   <img
                     src={it.product_image || "https://images.unsplash.com/photo-1607623814075-e51df1bdc82f?w=100"}
                     alt={it.product_name}
-                    className="w-12 h-12 rounded-lg object-cover border shrink-0"
+                    className="w-12 h-12 rounded-lg object-cover border shrink-0 opacity-80"
                   />
                   <div className="flex-1 min-w-0">
                     <p className="font-semibold text-zinc-900 truncate">{it.product_name}</p>
@@ -294,8 +320,10 @@ export default function TrackOrderPage({ params }: PageProps) {
                 </span>
               </div>
               <div className="flex justify-between font-bold text-[15px] pt-3 border-t border-zinc-100 text-zinc-950 items-baseline">
-                <span>Total Amount paid:</span>
-                <span className="text-2xl font-black text-primary">Rs {Number(order.total_amount).toLocaleString()}</span>
+                <span>Total Amount:</span>
+                <span className={`text-2xl font-black ${isCancelled ? "text-zinc-500 line-through decoration-rose-500 decoration-2" : "text-primary"}`}>
+                  Rs {Number(order.total_amount).toLocaleString()}
+                </span>
               </div>
             </div>
           </div>
@@ -304,7 +332,9 @@ export default function TrackOrderPage({ params }: PageProps) {
           <div className="md:col-span-2 space-y-6">
             
             {/* Customer & Shipping Details */}
-            <div className="bg-white border border-border rounded-3xl p-6 shadow-sm space-y-5">
+            <div className={`bg-white border rounded-3xl p-6 shadow-sm space-y-5 transition-colors duration-300 ${
+              isCancelled ? "border-rose-100/50" : "border-border"
+            }`}>
               <h2 className="font-sans text-[15px] font-bold uppercase tracking-wider text-zinc-800">
                 Delivery Details
               </h2>
@@ -330,8 +360,13 @@ export default function TrackOrderPage({ params }: PageProps) {
                       {paymentMethodLabels[order.payment_method] || order.payment_method}
                     </p>
                     <p className="text-[11px] text-muted-foreground mt-0.5 flex items-center gap-1.5">
-                      <span className={`w-2 h-2 rounded-full ${order.is_paid ? "bg-emerald-500" : "bg-amber-500"}`} />
-                      {order.is_paid ? "Paid successfully" : "Pay at delivery doorstep"}
+                      <span className={`w-2 h-2 rounded-full ${
+                        isCancelled ? "bg-rose-400" : order.is_paid ? "bg-emerald-500" : "bg-amber-500"
+                      }`} />
+                      {isCancelled 
+                        ? (order.is_paid ? "Refund Processing" : "Cancelled / Unpaid")
+                        : order.is_paid ? "Paid successfully" : "Pay at delivery doorstep"
+                      }
                     </p>
                   </div>
                 </div>
@@ -355,13 +390,21 @@ export default function TrackOrderPage({ params }: PageProps) {
               <p className="text-[12px] text-zinc-600 leading-relaxed">
                 If you have any questions regarding your delivery details, status, or issues, please contact our support team.
               </p>
-              <div className="pt-1.5">
+              <div className="pt-1.5 flex flex-col gap-2">
                 <Link
                   href="/contact"
-                  className="inline-block bg-primary text-white rounded-full px-6 py-2 text-[12px] font-semibold hover:opacity-95 transition"
+                  className="w-full text-center bg-primary text-white rounded-full py-2 text-[12px] font-semibold hover:opacity-95 transition"
                 >
                   Contact Support
                 </Link>
+                {isCancelled && (
+                  <Link
+                    href="/product"
+                    className="w-full text-center bg-zinc-100 text-zinc-800 rounded-full py-2 text-[12px] font-semibold hover:bg-zinc-200 transition border border-zinc-200"
+                  >
+                    Place a New Order
+                  </Link>
+                )}
               </div>
             </div>
 
