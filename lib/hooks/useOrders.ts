@@ -6,7 +6,7 @@ import {
   updateOrder,
   type OrderFilters,
 } from "@/lib/api/orders";
-import type { Order, OrderDetail, OrderInput, OrderUpdateInput } from "@/lib/types/order";
+import type { Order, OrderDetail, OrderInput, OrderUpdateInput, PaginatedOrders } from "@/lib/types/order";
 
 export const orderKeys = {
   all: ["orders"] as const,
@@ -16,9 +16,9 @@ export const orderKeys = {
 
 export function useOrders(
   filters?: OrderFilters,
-  options?: Partial<UseQueryOptions<Order[]>>
+  options?: Partial<UseQueryOptions<PaginatedOrders>>
 ) {
-  return useQuery<Order[]>({
+  return useQuery<PaginatedOrders>({
     queryKey: filters ? orderKeys.filtered(filters) : orderKeys.all,
     queryFn: () => fetchOrders(filters),
     staleTime: 1000 * 30, // 30 seconds for live order listing

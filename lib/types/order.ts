@@ -55,3 +55,12 @@ export type OrderUpdateInput = {
   is_paid?: boolean;
   tracking_number?: string | null;
 };
+
+export type PaginatedOrders = {
+  count: number;
+  next: string | null;
+  previous: string | null;
+  page: number;
+  total_pages: number;
+  results: Order[];
+};

@@ -1,5 +1,5 @@
 import { getValidAccessToken } from "@/lib/auth";
-import type { Order, OrderDetail, OrderInput, OrderUpdateInput } from "@/lib/types/order";
+import type { OrderDetail, OrderInput, OrderUpdateInput, PaginatedOrders } from "@/lib/types/order";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000/api";
 
@@ -8,9 +8,11 @@ export type OrderFilters = {
   payment_method?: string;
   is_paid?: boolean;
   search?: string;
+  page?: number;
+  page_size?: number;
 };
 
-export async function fetchOrders(filters?: OrderFilters): Promise<Order[]> {
+export async function fetchOrders(filters?: OrderFilters): Promise<PaginatedOrders> {
   const token = await getValidAccessToken();
   const headers: HeadersInit = {};
   if (token) {
@@ -31,6 +33,12 @@ export async function fetchOrders(filters?: OrderFilters): Promise<Order[]> {
     if (filters.search) {
       params.append("search", filters.search);
     }
+    if (filters.page) {
+      params.append("page", String(filters.page));
+    }
+    if (filters.page_size) {
+      params.append("page_size", String(filters.page_size));
+    }
   }
 
   const res = await fetch(`${API_URL}/orders/?${params.toString()}`, {
@@ -44,14 +52,7 @@ export async function fetchOrders(filters?: OrderFilters): Promise<Order[]> {
     throw new Error(`Failed to fetch orders: HTTP ${res.status}`);
   }
 
-  const data = await res.json();
-  if (Array.isArray(data)) {
-    return data;
-  }
-  if (data && typeof data === "object" && Array.isArray(data.results)) {
-    return data.results;
-  }
-  return [];
+  return res.json();
 }
 
 export async function fetchOrderDetail(orderId: string): Promise<OrderDetail> {

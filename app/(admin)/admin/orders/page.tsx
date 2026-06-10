@@ -35,25 +35,41 @@ function getStatusLabel(status: string): string {
 export default function OrdersPage() {
   const modal = useModal<Order>();
 
-  // Filters, search state
+  // Filters, search, and page state
   const [filter, setFilter] = useState("All");
   const [searchQuery, setSearchQuery] = useState("");
+  const [page, setPage] = useState(1);
+
+  const handleFilterChange = (newFilter: string) => {
+    setFilter(newFilter);
+    setPage(1);
+  };
+
+  const handleSearchChange = (query: string) => {
+    setSearchQuery(query);
+    setPage(1);
+  };
 
   // Load orders using useOrders react-query hook
   const {
-    data: orders = [],
+    data: paginatedData,
     isLoading,
     error: loadError,
   } = useOrders({
     status: filter !== "All" ? filter : undefined,
     search: searchQuery || undefined,
+    page: page,
   });
+
+  const orders = paginatedData?.results ?? [];
+  const count = paginatedData?.count ?? 0;
+  const totalPages = paginatedData?.total_pages ?? 1;
 
   const error = loadError ? (loadError as Error).message : null;
 
   return (
     <div className="space-y-5">
-      <PageHead title="Orders" subtitle={`${orders.length} orders total`} />
+      <PageHead title="Orders" subtitle={`${count} orders total`} />
 
       {/* Search and filter controls */}
       <div className="bg-white border border-border rounded-xl p-4 flex flex-col sm:flex-row gap-3 items-center justify-between shadow-sm">
@@ -61,7 +77,7 @@ export default function OrdersPage() {
           <Search size={15} className="text-muted-foreground shrink-0" />
           <input
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={(e) => handleSearchChange(e.target.value)}
             placeholder="Search Order #, Name or Phone..."
             className="ml-2 flex-1 outline-none text-[13px] bg-transparent"
           />
@@ -71,7 +87,7 @@ export default function OrdersPage() {
           {["All", ...STATUS_CHOICES.map((c) => c.value)].map((s) => (
             <button
               key={s}
-              onClick={() => setFilter(s)}
+              onClick={() => handleFilterChange(s)}
               className={`px-3.5 py-1.5 rounded-full text-[12px] font-medium whitespace-nowrap transition-colors cursor-pointer ${
                 filter === s
                   ? "bg-primary text-white"
@@ -101,51 +117,79 @@ export default function OrdersPage() {
           <p className="text-[13px] text-muted-foreground font-medium">Loading orders from backend…</p>
         </div>
       ) : (
-        <Table
-          rows={orders}
-          onRowClick={modal.openWith}
-          columns={[
-            {
-              key: "order_id",
-              label: "Order #",
-              render: (o) => (
-                <span className="font-mono text-[11px] font-semibold text-zinc-600">
-                  {o.order_id}
-                </span>
-              ),
-            },
-            { key: "full_name", label: "Customer" },
-            { key: "phone_number", label: "Phone" },
-            { key: "total_amount", label: "Total", render: (o) => `Rs ${Number(o.total_amount).toLocaleString()}` },
-            {
-              key: "payment_method",
-              label: "Payment",
-              render: (o) => (
-                <span className="text-[12px]">
-                  {PAYMENT_METHOD_LABELS[o.payment_method] || o.payment_method}
-                </span>
-              ),
-            },
-            {
-              key: "created_at",
-              label: "Date",
-              render: (o) => (
-                <span className="text-muted-foreground text-[12px]">
-                  {new Date(o.created_at).toLocaleDateString("en-US", {
-                    month: "short",
-                    day: "numeric",
-                    year: "numeric",
-                  })}
-                </span>
-              ),
-            },
-            {
-              key: "status",
-              label: "Status",
-              render: (o) => <Badge tone={getStatusTone(o.status)}>{getStatusLabel(o.status)}</Badge>,
-            },
-          ]}
-        />
+        <div className="space-y-4">
+          <Table
+            rows={orders}
+            onRowClick={modal.openWith}
+            columns={[
+              {
+                key: "order_id",
+                label: "Order #",
+                render: (o) => (
+                  <span className="font-mono text-[11px] font-semibold text-zinc-600">
+                    {o.order_id}
+                  </span>
+                ),
+              },
+              { key: "full_name", label: "Customer" },
+              { key: "phone_number", label: "Phone" },
+              { key: "total_amount", label: "Total", render: (o) => `Rs ${Number(o.total_amount).toLocaleString()}` },
+              {
+                key: "payment_method",
+                label: "Payment",
+                render: (o) => (
+                  <span className="text-[12px]">
+                    {PAYMENT_METHOD_LABELS[o.payment_method] || o.payment_method}
+                  </span>
+                ),
+              },
+              {
+                key: "created_at",
+                label: "Date",
+                render: (o) => (
+                  <span className="text-muted-foreground text-[12px]">
+                    {new Date(o.created_at).toLocaleDateString("en-US", {
+                      month: "short",
+                      day: "numeric",
+                      year: "numeric",
+                    })}
+                  </span>
+                ),
+              },
+              {
+                key: "status",
+                label: "Status",
+                render: (o) => <Badge tone={getStatusTone(o.status)}>{getStatusLabel(o.status)}</Badge>,
+              },
+            ]}
+          />
+
+          {/* Pagination Controls */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between bg-white border border-border rounded-xl px-4 py-3 shadow-sm">
+              <div className="text-[12px] text-muted-foreground">
+                Showing page <span className="font-semibold">{page}</span> of{" "}
+                <span className="font-semibold">{totalPages}</span>
+              </div>
+              <div className="flex gap-2">
+                <button
+                  disabled={page <= 1}
+                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                  className="px-3 py-1.5 rounded-lg text-[12px] font-semibold bg-cream hover:bg-zinc-100 disabled:opacity-50 disabled:pointer-events-none transition cursor-pointer border"
+                >
+                  Previous
+                </button>
+                <button
+                  disabled={page >= totalPages}
+                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                  className="px-3 py-1.5 rounded-lg text-[12px] font-semibold bg-cream hover:bg-zinc-100 disabled:opacity-50 disabled:pointer-events-none transition cursor-pointer border"
+                >
+                  Next
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
       )}
 
       {/* SlideOver detail view */}
