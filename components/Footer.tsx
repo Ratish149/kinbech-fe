@@ -49,7 +49,11 @@ export async function Footer() {
                 Contact
               </Link>
             </li>
-
+            <li>
+              <Link href="/track" className="hover:text-primary">
+                Track Order
+              </Link>
+            </li>
           </ul>
         </div>
 

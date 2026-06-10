@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Search, TrendingUp, Loader2 } from "lucide-react";
+import { Search, TrendingUp, Loader2, ChevronDown } from "lucide-react";
 import { useCategories } from "@/lib/hooks/useCategories";
 import { useProducts } from "@/lib/hooks/useProducts";
 
@@ -12,6 +12,7 @@ export function HeroSearch() {
   const [q, setQ] = useState("");
   const [cat, setCat] = useState("");
   const [open, setOpen] = useState(false);
+  const [catOpen, setCatOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
   const { data: categories = [] } = useCategories();
@@ -33,7 +34,10 @@ export function HeroSearch() {
 
   useEffect(() => {
     const onDoc = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+      if (ref.current && !ref.current.contains(e.target as Node)) {
+        setOpen(false);
+        setCatOpen(false);
+      }
     };
     document.addEventListener("mousedown", onDoc);
     return () => document.removeEventListener("mousedown", onDoc);
@@ -67,28 +71,45 @@ export function HeroSearch() {
       router.push(`/product?category=${cat}`);
     }
     setOpen(false);
+    setCatOpen(false);
   };
 
   return (
     <div ref={ref} className="mt-5 sm:mt-7 w-full max-w-xl mx-auto relative">
       <form onSubmit={handleSearchSubmit} className="flex items-center bg-white border border-border rounded-full px-2 py-2 shadow-sm">
-        {/* Category select — hidden on mobile, shown from sm */}
-        <select
-          value={cat}
-          onChange={(e) => setCat(e.target.value)}
-          disabled={categories.length === 0}
-          className="hidden sm:block bg-transparent text-[13px] px-3 py-2 outline-none rounded-full cursor-pointer disabled:opacity-50"
-        >
-          {categories.length === 0 ? (
-            <option value="">Loading...</option>
-          ) : (
-            categories.map((c) => (
-              <option key={c.slug} value={c.slug}>
-                {c.name}
-              </option>
-            ))
+        {/* Beautiful Custom Category Dropdown */}
+        <div className="relative hidden sm:block shrink-0">
+          <button
+            type="button"
+            onClick={() => setCatOpen(!catOpen)}
+            disabled={categories.length === 0}
+            className="flex items-center gap-1 bg-transparent text-[13px] px-4 py-2 outline-none rounded-full cursor-pointer disabled:opacity-50 font-medium text-foreground hover:bg-cream/40 transition-colors"
+          >
+            <span className="truncate max-w-[120px]">
+              {categories.length === 0 ? "Loading..." : (activeCategoryName || "Select")}
+            </span>
+            <ChevronDown size={14} className={`text-muted-foreground transition-transform duration-200 shrink-0 ${catOpen ? "rotate-180" : ""}`} />
+          </button>
+
+          {catOpen && categories.length > 0 && (
+            <div className="absolute left-0 top-full mt-2 bg-white border border-border rounded-2xl shadow-lg z-[60] min-w-[180px] py-1.5 text-left overflow-hidden">
+              {categories.map((c) => (
+                <button
+                  key={c.slug}
+                  type="button"
+                  onClick={() => {
+                    setCat(c.slug);
+                    setCatOpen(false);
+                  }}
+                  className={`w-full text-left px-4 py-2.5 text-[13px] hover:bg-cream cursor-pointer transition-colors ${cat === c.slug ? "text-primary font-semibold bg-cream/30" : "text-foreground"
+                    }`}
+                >
+                  {c.name}
+                </button>
+              ))}
+            </div>
           )}
-        </select>
+        </div>
         <div className="hidden sm:block w-px h-5 bg-border" />
         <div className="flex-1 flex items-center gap-2 px-3">
           <Search size={15} className="text-muted-foreground" />

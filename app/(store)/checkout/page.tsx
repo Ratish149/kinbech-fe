@@ -2,15 +2,18 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ChevronLeft, ShoppingBag, MapPin, Tag } from "lucide-react";
+import { ChevronLeft, ShoppingBag, MapPin, Tag, Loader2 } from "lucide-react";
 import { useState } from "react";
 import { useCart } from "@/lib/cart";
 import { Logo } from "@/components/Header";
 import { toast } from "sonner";
+import { useCreateOrder } from "@/lib/hooks/useOrders";
+import type { OrderInput } from "@/lib/types/order";
 
 export default function CheckoutPage() {
   const { items, total, clear } = useCart();
   const router = useRouter();
+  const createOrderMutation = useCreateOrder();
 
   // Form fields
   const [form, setForm] = useState({
@@ -49,24 +52,62 @@ export default function CheckoutPage() {
     }
   };
 
-  const place = () => {
-    if (!form.name.trim() || !form.phone.trim() || !form.city.trim() || !form.billingAddress.trim()) {
+  const place = async () => {
+    if (!form.name.trim() || !form.phone.trim() || !form.billingAddress.trim()) {
       toast.error("Incomplete Form", {
         description: "Please fill in all required fields to place your order.",
       });
       return;
     }
 
-    const id = "KM" + Math.floor(100000 + Math.random() * 900000);
+    // Map payment method to choices expected by backend ChoiceFilter
+    const methodMap: Record<string, string> = {
+      cash: "COD",
+      esewa: "Esewa",
+      khalti: "Khalti",
+      fonepay: "PhonePay",
+    };
+
+    const payload: OrderInput = {
+      full_name: form.name.trim(),
+      phone_number: form.phone.trim(),
+      email: form.email.trim() || null,
+      shipping_address: form.shippingSameAsBilling
+        ? form.billingAddress.trim()
+        : (form.shippingAddress.trim() || form.billingAddress.trim()),
+      nearest_landmark: form.city,
+      total_amount: finalTotal,
+      discount_amount: discountAmount,
+      payment_method: methodMap[pay] || "COD",
+      status: "pending",
+      is_paid: false,
+      note: form.orderNotes.trim() || null,
+      items: items.map((it) => ({
+        product: Number(it.product.id),
+        quantity: it.qty,
+        price: Number(it.product.price),
+      })),
+    };
+
     try {
-      sessionStorage.setItem("km_order", JSON.stringify({ id, items, total: finalTotal, form, pay }));
-    } catch (e) {
-      console.error("Failed to store order in sessionStorage", e);
+      const orderData = await createOrderMutation.mutateAsync(payload);
+      
+      toast.success("Order Placed Successfully!", {
+        description: `Your order ID is ${orderData.order_id}.`,
+      });
+
+      clear();
+      
+      // Navigate to tracking page
+      router.push(`/track/${orderData.order_id}`);
+    } catch (e: any) {
+      toast.error("Error", {
+        description: e.message || "Something went wrong while placing your order.",
+      });
     }
-    clear();
-    router.push(`/track/${id}`);
   };
 
+  const submitting = createOrderMutation.isPending;
   const isFormValid =
     form.name.trim() !== "" &&
     form.phone.trim() !== "" &&
@@ -111,7 +152,7 @@ export default function CheckoutPage() {
     <div className="min-h-screen bg-white text-zinc-900 flex flex-col">
 
       {/* Main Checkout Area */}
-      <div className="container-x py-12 flex-1 grid md:grid-cols-[1fr_380px] gap-12">
+      <div className="container-x py-12 flex-1 grid md:grid-cols-[1fr_380px] items-start gap-12">
         <div className="space-y-8">
           <div className="border border-zinc-200 bg-white rounded-3xl p-8 shadow-sm space-y-8">
             
@@ -151,28 +192,6 @@ export default function CheckoutPage() {
                 />
               </div>
 
-              {/* Row 3: City/District select */}
-              <div className="flex flex-col gap-1.5">
-                <label className="text-[13px] font-semibold text-zinc-700">City/District *</label>
-                <div className="relative">
-                  <select
-                    value={form.city}
-                    onChange={(e) => setForm({ ...form, city: e.target.value })}
-                    className="w-full border border-zinc-200 rounded-xl px-4 py-3 text-[14px] outline-none transition bg-white focus:border-primary focus:ring-4 focus:ring-primary/5 cursor-pointer appearance-none"
-                  >
-                    {["Kathmandu", "Lalitpur", "Bhaktapur", "Pokhara", "Chitwan", "Biratnagar"].map((c) => (
-                      <option key={c} value={c}>
-                        {c}
-                      </option>
-                    ))}
-                  </select>
-                  <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-zinc-500">
-                    <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
-                      <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />
-                    </svg>
-                  </div>
-                </div>
-              </div>
 
               {/* Row 5: Billing Address */}
               <div className="flex flex-col gap-1.5">
@@ -299,10 +318,17 @@ export default function CheckoutPage() {
               </p>
               <button
                 onClick={place}
-                disabled={!isFormValid}
-                className="bg-primary text-primary-foreground rounded-full px-8 py-3.5 text-[14px] font-semibold hover:opacity-95 shadow-lg shadow-primary/20 transition disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer shrink-0"
+                disabled={!isFormValid || submitting}
+                className="bg-primary text-primary-foreground rounded-full px-8 py-3.5 text-[14px] font-semibold hover:opacity-95 shadow-lg shadow-primary/20 transition disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer shrink-0 flex items-center gap-2 justify-center"
               >
-                Place Order (Rs {finalTotal})
+                {submitting ? (
+                  <>
+                    <Loader2 size={16} className="animate-spin" />
+                    Placing Order...
+                  </>
+                ) : (
+                  `Place Order (Rs ${finalTotal})`
+                )}
               </button>
             </div>
 
@@ -310,7 +336,7 @@ export default function CheckoutPage() {
         </div>
 
         {/* Order Summary Sidebar */}
-        <aside className="border border-zinc-200 bg-white rounded-3xl p-6 h-fit md:sticky md:top-6 space-y-6 shadow-sm">
+        <aside className="border border-zinc-200 bg-white rounded-3xl p-6 h-fit md:sticky md:top-24 space-y-6 shadow-sm">
           <div>
             <h3 className="font-sans text-lg font-bold text-zinc-900">Order Summary</h3>
             <p className="text-[12px] text-muted-foreground mt-0.5">{items.length} items</p>
@@ -361,7 +387,7 @@ export default function CheckoutPage() {
           </div>
 
           {/* Promo Code Input */}
-          <div className="border-t border-zinc-100 pt-4 space-y-3">
+          {/* <div className="border-t border-zinc-100 pt-4 space-y-3">
             <div className="flex items-center gap-1.5 text-[12px] font-semibold text-zinc-700">
               <Tag size={14} className="text-zinc-500" />
               <span>Have a promo code?</span>
@@ -389,7 +415,7 @@ export default function CheckoutPage() {
                 Code {appliedPromo} applied successfully!
               </p>
             )}
-          </div>
+          </div> */}
 
           <div className="border-t border-zinc-100 pt-4 space-y-2.5 text-[13px]">
             <div className="flex justify-between text-zinc-500">
@@ -408,11 +434,11 @@ export default function CheckoutPage() {
                 {deliveryFee === 0 ? "Free" : `Rs ${deliveryFee}`}
               </span>
             </div>
-            {deliveryFee > 0 && (
+            {/* {deliveryFee > 0 && (
               <p className="text-[10px] text-muted-foreground text-right">
                 Free delivery on orders over Rs 1,500
               </p>
-            )}
+            )} */}
             <div className="flex justify-between font-bold text-[15px] pt-3 border-t border-zinc-100 text-zinc-900 items-baseline">
               <span>Total:</span>
               <span className="text-2xl font-black text-primary">Rs {finalTotal}</span>
