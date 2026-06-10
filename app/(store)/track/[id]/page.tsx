@@ -154,7 +154,7 @@ export default function TrackOrderPage({ params }: PageProps) {
             </div>
             <p className="text-[13px] text-muted-foreground flex items-center gap-1.5 flex-wrap">
               <span>Your order</span>
-              <span className="font-mono font-bold text-zinc-800 bg-zinc-50 border px-2 py-0.5 rounded-lg text-[12px]">
+              <span className="font-mono text-zinc-800 bg-zinc-50 border px-2 py-0.5 rounded-lg text-[12px]">
                 #{order.order_id}
               </span>
               {isCancelled ? (
@@ -162,7 +162,7 @@ export default function TrackOrderPage({ params }: PageProps) {
               ) : (
                 <>
                   <span>is currently</span>
-                  <span className="font-bold capitalize text-primary">{order.status}</span>.
+                  <span className="capitalize text-primary">{order.status}</span>.
                 </>
               )}
             </p>
@@ -203,7 +203,7 @@ export default function TrackOrderPage({ params }: PageProps) {
           </div>
         ) : (
           <div className="bg-white border border-border rounded-3xl p-6 sm:p-8 shadow-sm space-y-8">
-            <h2 className="font-sans text-[15px] font-bold uppercase tracking-wider text-zinc-800">
+            <h2 className="font-sans text-[15px] text-zinc-800">
               Tracking Timeline
             </h2>
             <div className="relative grid grid-cols-1 md:grid-cols-4 gap-6 pt-2">
@@ -251,7 +251,7 @@ export default function TrackOrderPage({ params }: PageProps) {
                     {/* Step Labels */}
                     <div className="md:mt-4 space-y-1">
                       <p
-                        className={`text-[14px] font-bold leading-none ${
+                        className={`text-[14px] leading-none ${
                           isCompleted ? "text-zinc-900" : "text-zinc-400"
                         }`}
                       >
@@ -275,7 +275,7 @@ export default function TrackOrderPage({ params }: PageProps) {
           <div className={`bg-white border rounded-3xl p-6 shadow-sm space-y-6 md:col-span-3 transition-colors duration-300 ${
             isCancelled ? "border-rose-100/50" : "border-border"
           }`}>
-            <h2 className="font-sans text-[15px] font-bold uppercase tracking-wider text-zinc-800">
+            <h2 className="font-sans text-[15px] text-zinc-800">
               Order Items
             </h2>
 
@@ -293,7 +293,7 @@ export default function TrackOrderPage({ params }: PageProps) {
                       Rs {Number(it.price).toLocaleString()} × {it.quantity}
                     </p>
                   </div>
-                  <span className="font-bold text-zinc-900 shrink-0 text-right">
+                  <span className="text-zinc-900 shrink-0 text-right">
                     Rs {(it.quantity * Number(it.price)).toLocaleString()}
                   </span>
                 </li>
@@ -319,7 +319,7 @@ export default function TrackOrderPage({ params }: PageProps) {
                   {order.total_amount > 1500 ? "Free" : "Rs 100"}
                 </span>
               </div>
-              <div className="flex justify-between font-bold text-[15px] pt-3 border-t border-zinc-100 text-zinc-950 items-baseline">
+              <div className="flex justify-between text-[15px] pt-3 border-t border-zinc-100 text-zinc-950 items-baseline">
                 <span>Total Amount:</span>
                 <span className={`text-2xl font-black ${isCancelled ? "text-zinc-500 line-through decoration-rose-500 decoration-2" : "text-primary"}`}>
                   Rs {Number(order.total_amount).toLocaleString()}
@@ -335,7 +335,7 @@ export default function TrackOrderPage({ params }: PageProps) {
             <div className={`bg-white border rounded-3xl p-6 shadow-sm space-y-5 transition-colors duration-300 ${
               isCancelled ? "border-rose-100/50" : "border-border"
             }`}>
-              <h2 className="font-sans text-[15px] font-bold uppercase tracking-wider text-zinc-800">
+              <h2 className="font-sans text-[15px] text-zinc-800">
                 Delivery Details
               </h2>
 
@@ -373,7 +373,7 @@ export default function TrackOrderPage({ params }: PageProps) {
 
                 {order.tracking_number && (
                   <div className="border-t border-zinc-100 pt-3 space-y-1">
-                    <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider">
+                    <p className="text-[10px] text-muted-foreground">
                       Tracking Code
                     </p>
                     <p className="font-mono text-[12px] font-bold text-zinc-700 bg-zinc-50 border rounded-lg p-2">
