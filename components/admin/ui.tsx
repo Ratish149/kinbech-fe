@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
+import { createPortal } from "react-dom";
 
 // ────────────────────────────────────────────────────
 // KPI card
@@ -185,7 +186,15 @@ export function SlideOver({
   title: string;
   children: React.ReactNode;
 }) {
-  return (
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) return null;
+
+  return createPortal(
     <>
       {/* Backdrop */}
       <div
@@ -196,7 +205,7 @@ export function SlideOver({
       />
       {/* Panel */}
       <div
-        className={`fixed right-0 top-0 h-full z-50 w-full max-w-[480px] bg-white shadow-2xl flex flex-col transition-transform duration-300 ease-[cubic-bezier(.25,.46,.45,.94)] ${
+        className={`fixed inset-y-0 right-0 z-50 w-full max-w-[480px] bg-white shadow-2xl flex flex-col transition-transform duration-300 ease-[cubic-bezier(.25,.46,.45,.94)] ${
           open ? "translate-x-0" : "translate-x-full"
         }`}
       >
@@ -211,7 +220,8 @@ export function SlideOver({
         </div>
         <div className="flex-1 overflow-y-auto p-5">{children}</div>
       </div>
-    </>
+    </>,
+    document.body
   );
 }
 

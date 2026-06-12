@@ -150,14 +150,29 @@ export function OrderDetailView({ orderId, onSaveSuccess, onClose }: OrderDetail
             </li>
           ))}
         </ul>
-        <div className="flex justify-between items-baseline mt-4 border-t pt-3 text-[14px]">
-          <span className="text-zinc-500 font-medium">Discount:</span>
-          <span className="font-semibold text-rose-600">-Rs {Number(orderDetails.discount_amount).toLocaleString()}</span>
-        </div>
-        <div className="flex justify-between items-baseline mt-2 text-[15px] font-bold">
-          <span>Total Amount:</span>
-          <span className="text-lg text-primary">Rs {Number(orderDetails.total_amount).toLocaleString()}</span>
-        </div>
+        {Number(orderDetails.discount_amount) > 0 ? (
+          <>
+            <div className="flex justify-between items-baseline mt-4 border-t pt-3 text-[14px]">
+              <span className="text-zinc-500 font-medium">Discount:</span>
+              <span className="font-semibold text-rose-600">
+                -Rs {Number(orderDetails.discount_amount).toLocaleString()}
+              </span>
+            </div>
+            <div className="flex justify-between items-baseline mt-2 text-[15px] font-bold">
+              <span>Total Amount:</span>
+              <span className="text-lg text-primary">
+                Rs {Number(orderDetails.total_amount).toLocaleString()}
+              </span>
+            </div>
+          </>
+        ) : (
+          <div className="flex justify-between items-baseline mt-4 border-t pt-3 text-[15px] font-bold">
+            <span>Total Amount:</span>
+            <span className="text-lg text-primary">
+              Rs {Number(orderDetails.total_amount).toLocaleString()}
+            </span>
+          </div>
+        )}
       </div>
 
       {/* Update controls */}
