@@ -1,8 +1,9 @@
 "use client";
 
-import { Loader2, ShoppingBag } from "lucide-react";
-import { Badge } from "@/components/admin/ui";
-import { DashboardBaseStats } from "@/lib/api/stats";
+import { Loader2 } from "lucide-react";
+import { Badge, Table, SlideOver, useModal } from "@/components/admin/ui";
+import { OrderDetailView } from "@/components/admin/OrderDetailView";
+import { RecentOrderData } from "@/lib/api/stats";
 
 const STATUS_TONES: Record<string, "warn" | "success" | "danger" | "default" | "info"> = {
   pending: "warn",
@@ -13,56 +14,80 @@ const STATUS_TONES: Record<string, "warn" | "success" | "danger" | "default" | "
 };
 
 interface RecentOrdersProps {
-  baseStats?: DashboardBaseStats;
+  recentOrders?: RecentOrderData[];
   isLoading: boolean;
 }
 
-export function RecentOrders({ baseStats, isLoading }: RecentOrdersProps) {
+export function RecentOrders({ recentOrders, isLoading }: RecentOrdersProps) {
+  const modal = useModal<RecentOrderData>();
+
+  // Table generic requires 'id' property
+  const ordersWithId =
+    recentOrders?.map((o) => ({
+      ...o,
+      id: o.order_id,
+    })) ?? [];
+
   return (
-    <div className="md:col-span-2 bg-white border border-border rounded-xl p-5">
-      <h3 className="font-serif text-lg font-medium mb-4">Recent orders</h3>
-      <ul className="space-y-3 text-[13px]">
-        {isLoading || !baseStats ? (
-          <div className="flex items-center justify-center py-12">
+    <div className="md:col-span-2 bg-white border border-border rounded-xl p-5 flex flex-col justify-between">
+      <div>
+        <h3 className="font-serif text-lg font-medium mb-4">Recent orders</h3>
+        {isLoading || !recentOrders ? (
+          <div className="flex items-center justify-center py-16">
             <Loader2 className="animate-spin text-primary/40" size={24} />
           </div>
         ) : (
-          <>
-            {baseStats.recent_orders.map((o) => (
-              <li
-                key={o.order_id}
-                className="flex items-center justify-between py-2 border-b border-border last:border-b-0"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-full bg-cream flex items-center justify-center">
-                    <ShoppingBag size={14} className="text-primary" />
-                  </div>
-                  <div>
-                    <span className="font-semibold text-zinc-900">{o.full_name}</span>
-                    <span className="font-mono text-[11px] text-muted-foreground ml-2">
-                      #{o.order_id}
-                    </span>
-                  </div>
-                </div>
-                <div className="flex items-center gap-4">
-                  <span className="font-medium text-zinc-900">
-                    Rs {o.total_amount.toLocaleString()}
+          <Table
+            rows={ordersWithId}
+            onRowClick={(row) => modal.openWith(row)}
+            columns={[
+              {
+                key: "order_id",
+                label: "Order #",
+                render: (o) => (
+                  <span className="font-mono text-[11px] font-semibold text-zinc-600">
+                    {o.order_id}
                   </span>
-                  <Badge tone={STATUS_TONES[o.status] || "default"}>{o.status}</Badge>
-                  <span className="text-muted-foreground text-[11px] min-w-[50px] text-right">
+                ),
+              },
+              { key: "full_name", label: "Customer" },
+              {
+                key: "total_amount",
+                label: "Total",
+                render: (o) => `Rs ${Number(o.total_amount).toLocaleString()}`,
+              },
+              {
+                key: "status",
+                label: "Status",
+                render: (o) => (
+                  <Badge tone={STATUS_TONES[o.status] || "default"}>
+                    {o.status}
+                  </Badge>
+                ),
+              },
+              {
+                key: "time_ago",
+                label: "Date",
+                render: (o) => (
+                  <span className="text-muted-foreground text-[12px]">
                     {o.time_ago}
                   </span>
-                </div>
-              </li>
-            ))}
-            {baseStats.recent_orders.length === 0 && (
-              <p className="text-[13px] text-muted-foreground py-4 text-center">
-                No orders placed yet.
-              </p>
-            )}
-          </>
+                ),
+              },
+            ]}
+          />
         )}
-      </ul>
+      </div>
+
+      <SlideOver
+        open={modal.open}
+        onClose={modal.close}
+        title={`Order: ${modal.item?.order_id ?? ""}`}
+      >
+        {modal.item && (
+          <OrderDetailView orderId={modal.item.order_id} onClose={modal.close} />
+        )}
+      </SlideOver>
     </div>
   );
 }

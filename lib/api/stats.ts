@@ -8,6 +8,14 @@ export type KPIData = {
   trend: "up" | "down" | "neutral";
 };
 
+export type RecentOrderData = {
+  order_id: string;
+  full_name: string;
+  total_amount: number;
+  status: string;
+  time_ago: string;
+};
+
 export type DashboardBaseStats = {
   kpis: {
     today_sales: KPIData;
@@ -15,13 +23,6 @@ export type DashboardBaseStats = {
     low_stock_items: KPIData;
     live_animals: KPIData;
   };
-  recent_orders: {
-    order_id: string;
-    full_name: string;
-    total_amount: number;
-    status: string;
-    time_ago: string;
-  }[];
 };
 
 export type SalesChartData = { d: string; v: number; orders: number }[];
@@ -106,3 +107,23 @@ export async function fetchAlerts(): Promise<AlertData[]> {
 
   return res.json();
 }
+
+// Recent Orders
+export async function fetchRecentOrders(): Promise<RecentOrderData[]> {
+  const token = await getValidAccessToken();
+  const headers: HeadersInit = {};
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
+  }
+
+  const res = await fetch(`${API_URL}/stats/recent-orders/`, {
+    headers,
+  });
+
+  if (!res.ok) {
+    throw new Error(`Failed to fetch recent orders: HTTP ${res.status}`);
+  }
+
+  return res.json();
+}
+

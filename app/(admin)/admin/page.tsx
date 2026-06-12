@@ -13,6 +13,7 @@ import {
   useSalesChart,
   useCategoryChart,
   useAlerts,
+  useRecentOrders,
 } from "@/lib/hooks/useStats";
 
 export default function DashboardPage() {
@@ -20,6 +21,7 @@ export default function DashboardPage() {
   const { data: salesChart, isLoading: isSalesLoading } = useSalesChart();
   const { data: categoryChart, isLoading: isCatLoading } = useCategoryChart();
   const { data: alerts, isLoading: isAlertsLoading } = useAlerts();
+  const { data: recentOrders, isLoading: isRecentOrdersLoading } = useRecentOrders();
 
   if (baseError) {
     return (
@@ -53,9 +55,10 @@ export default function DashboardPage() {
 
       {/* Activity + Alerts */}
       <div className="grid md:grid-cols-3 gap-4">
-        <RecentOrders baseStats={baseStats} isLoading={isBaseLoading} />
+        <RecentOrders recentOrders={recentOrders} isLoading={isRecentOrdersLoading} />
         <DashboardAlerts alerts={alerts} isLoading={isAlertsLoading} />
       </div>
     </div>
   );
 }
+

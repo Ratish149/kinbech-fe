@@ -4,10 +4,12 @@ import {
   fetchSalesChart,
   fetchCategoryChart,
   fetchAlerts,
+  fetchRecentOrders,
   type DashboardBaseStats,
   type SalesChartData,
   type CategoryChartData,
   type AlertData,
+  type RecentOrderData,
 } from "@/lib/api/stats";
 
 export function useDashboardBaseStats() {
@@ -41,3 +43,12 @@ export function useAlerts() {
     staleTime: 1000 * 60 * 2, // 2 minutes
   });
 }
+
+export function useRecentOrders() {
+  return useQuery<RecentOrderData[]>({
+    queryKey: ["dashboard-recent-orders"],
+    queryFn: fetchRecentOrders,
+    staleTime: 1000 * 60 * 5, // 5 minutes
+  });
+}
+
