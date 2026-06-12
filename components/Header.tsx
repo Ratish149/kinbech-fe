@@ -7,7 +7,8 @@ import { useCart } from "@/lib/cart";
 import { useCategories } from "@/lib/hooks/useCategories";
 import type { Category, Subcategory } from "@/lib/types/category";
 import { SearchSuggest } from "./SearchSuggest";
-import { getCurrentUser, clearTokens, type TokenPayload } from "@/lib/auth";
+import { getCurrentUser, clearTokens } from "@/lib/auth";
+import type { TokenPayload } from "@/lib/types/auth";
 
 export function Logo({ className = "" }: { className?: string }) {
   return (

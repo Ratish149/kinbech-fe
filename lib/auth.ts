@@ -1,21 +1,6 @@
+import { TokenPayload, AuthTokens } from "@/lib/types/auth";
+
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000/api";
-
-export type TokenPayload = {
-  user_id: number;
-  username: string;
-  email: string;
-  first_name: string;
-  last_name: string;
-  phone_number?: string;
-  is_staff: boolean;
-  exp: number;
-  iat: number;
-};
-
-export type AuthTokens = {
-  access: string;
-  refresh: string;
-};
 
 /** Decode a JWT without verifying signature (client-side only). */
 export function decodeJwt(token: string): TokenPayload | null {

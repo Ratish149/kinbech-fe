@@ -4,7 +4,7 @@ import { Bell, ShoppingBag, LogOut } from "lucide-react";
 import { clearTokens, getCurrentUser } from "@/lib/auth";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import type { TokenPayload } from "@/lib/auth";
+import type { TokenPayload } from "@/lib/types/auth";
 
 export function AdminHeader() {
   const router = useRouter();

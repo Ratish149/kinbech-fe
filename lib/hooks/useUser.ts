@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { fetchUserProfile, updateUserProfile } from "@/lib/api/user";
+import { fetchUserProfile, updateUserProfile, searchCustomerByPhone, createPOSCustomer } from "@/lib/api/user";
 import { UserProfile, UserProfileUpdateInput } from "@/lib/types/auth";
 
 export const userKeys = {
@@ -24,3 +24,27 @@ export function useUpdateUserProfile() {
     },
   });
 }
+
+export function useSearchCustomerByPhone() {
+  return useMutation({
+    mutationFn: (phone: string) => searchCustomerByPhone(phone),
+  });
+}
+
+export function useCreatePOSCustomer() {
+  return useMutation({
+    mutationFn: ({ firstName, lastName, phone }: { firstName: string; lastName: string; phone: string }) =>
+      createPOSCustomer(firstName, lastName, phone),
+  });
+}
+
+export function useSearchCustomer(phone: string, options?: { enabled?: boolean }) {
+  return useQuery<UserProfile[]>({
+    queryKey: ["customerSearch", phone],
+    queryFn: () => searchCustomerByPhone(phone),
+    staleTime: 1000 * 30, // 30 seconds
+    ...options,
+  });
+}
+
+

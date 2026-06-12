@@ -23,3 +23,20 @@ export interface UserProfileUpdateInput {
   first_name?: string;
   last_name?: string;
 }
+
+export type TokenPayload = {
+  user_id: number;
+  username: string;
+  email: string;
+  first_name: string;
+  last_name: string;
+  phone_number?: string;
+  is_staff: boolean;
+  exp: number;
+  iat: number;
+};
+
+export type AuthTokens = {
+  access: string;
+  refresh: string;
+};

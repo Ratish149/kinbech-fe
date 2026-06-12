@@ -6,7 +6,7 @@ import {
   updateOrder,
   type OrderFilters,
 } from "@/lib/api/orders";
-import type { Order, OrderDetail, OrderInput, OrderUpdateInput, PaginatedOrders } from "@/lib/types/order";
+import type {OrderDetail, OrderInput, OrderUpdateInput, PaginatedOrders } from "@/lib/types/order";
 
 export const orderKeys = {
   all: ["orders"] as const,

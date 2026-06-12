@@ -16,6 +16,7 @@ export type Order = {
   payment_method: string;
   status: string;
   is_paid: boolean;
+  is_pos_order?: boolean;
   created_at: string;
 };
 
@@ -32,6 +33,7 @@ export type OrderDetail = Order & {
 };
 
 export type OrderInput = {
+  user?: number | null;
   full_name: string;
   phone_number: string;
   email: string | null;
@@ -42,6 +44,7 @@ export type OrderInput = {
   payment_method: string;
   status?: string;
   is_paid?: boolean;
+  is_pos_order?: boolean;
   note: string | null;
   items: {
     product: number;
