@@ -24,7 +24,7 @@ export type DashboardBaseStats = {
   }[];
 };
 
-export type SalesChartData = { d: string; v: number }[];
+export type SalesChartData = { d: string; v: number; orders: number }[];
 export type CategoryChartData = { name: string; v: number }[];
 export type AlertData = {
   type: "danger" | "warn" | "success" | "info";

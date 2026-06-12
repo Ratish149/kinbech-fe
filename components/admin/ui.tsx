@@ -236,22 +236,37 @@ export function MiniBarChart({
   labelKey = "d",
   color = "#075924",
 }: {
-  data: Record<string, number | string>[];
+  data: Record<string, any>[];
   valueKey?: string;
   labelKey?: string;
   color?: string;
 }) {
   const max = Math.max(...data.map((d) => Number(d[valueKey]) || 0));
+  const [hoveredIdx, setHoveredIdx] = useState<number | null>(null);
+
+  const hoveredVal = hoveredIdx !== null ? Number(data[hoveredIdx][valueKey]) || 0 : 0;
+  const hoveredHeightPct = max ? (hoveredVal / max) * 100 : 0;
+
   return (
-    <div className="flex items-end gap-1 h-full w-full">
+    <div className="relative w-full h-full flex items-end gap-1 group/barchart">
       {data.map((d, i) => {
         const val = Number(d[valueKey]) || 0;
         const heightPct = max ? (val / max) * 100 : 0;
         return (
-          <div key={i} className="flex-1 flex flex-col items-center gap-1">
+          <div
+            key={i}
+            className="flex-1 flex flex-col items-center gap-1 justify-end h-full relative cursor-pointer"
+            onMouseEnter={() => setHoveredIdx(i)}
+            onMouseLeave={() => setHoveredIdx(null)}
+          >
             <div
-              className="w-full rounded-t-sm transition-all duration-500"
-              style={{ height: `${heightPct}%`, backgroundColor: color, minHeight: 2 }}
+              className="w-full rounded-t-sm transition-all duration-300"
+              style={{
+                height: `${heightPct}%`,
+                backgroundColor: color,
+                minHeight: 2,
+                opacity: hoveredIdx === null || hoveredIdx === i ? 1 : 0.6,
+              }}
             />
             <span className="text-[9px] text-muted-foreground truncate w-full text-center">
               {String(d[labelKey] ?? "")}
@@ -259,6 +274,24 @@ export function MiniBarChart({
           </div>
         );
       })}
+
+      {hoveredIdx !== null && (
+        <div
+          className="absolute pointer-events-none bg-white/95 backdrop-blur-sm border border-zinc-200/80 rounded-xl p-3 shadow-xl text-zinc-800 text-[11px] space-y-1 transition-all duration-100 z-10 min-w-[120px]"
+          style={{
+            left: `${((hoveredIdx + 0.5) / data.length) * 100}%`,
+            bottom: `calc(${hoveredHeightPct}% + 24px)`,
+            transform: "translateX(-50%)",
+          }}
+        >
+          <div className="font-semibold text-zinc-500 text-[10px] tracking-wide uppercase">
+            {String(data[hoveredIdx][labelKey] ?? "")}
+          </div>
+          <div className="font-serif text-[13px] font-semibold text-zinc-900">
+            Rs {Number(data[hoveredIdx][valueKey]).toLocaleString()}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -268,10 +301,11 @@ export function MiniAreaChart({
   valueKey = "v",
   color = "#075924",
 }: {
-  data: Record<string, number | string>[];
+  data: Record<string, any>[];
   valueKey?: string;
   color?: string;
 }) {
+  const [hoveredIdx, setHoveredIdx] = useState<number | null>(null);
   const vals = data.map((d) => Number(d[valueKey]) || 0);
   const max = Math.max(...vals);
   const min = Math.min(...vals);
@@ -292,27 +326,87 @@ export function MiniAreaChart({
   const pts = vals.map((v, i) => `${px(i)},${py(v)}`).join(" ");
   const area = `M${pad},${H} ` + vals.map((v, i) => `L${px(i)},${py(v)}`).join(" ") + ` L${W - pad},${H} Z`;
 
+  const handleMouseMove = (e: React.MouseEvent<SVGSVGElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const pct = x / rect.width;
+    const index = Math.max(0, Math.min(data.length - 1, Math.round(pct * (data.length - 1))));
+    setHoveredIdx(index);
+  };
+
   return (
-    <svg
-      viewBox={`0 0 ${W} ${H}`}
-      className="w-full h-full"
-      preserveAspectRatio="none"
-    >
-      <defs>
-        <linearGradient id="ag" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor={color} stopOpacity={0.35} />
-          <stop offset="100%" stopColor={color} stopOpacity={0} />
-        </linearGradient>
-      </defs>
-      <path d={area} fill="url(#ag)" />
-      <polyline
-        points={pts}
-        fill="none"
-        stroke={color}
-        strokeWidth="2"
-        strokeLinejoin="round"
-        strokeLinecap="round"
-      />
-    </svg>
+    <div className="relative w-full h-full group/chart">
+      <svg
+        viewBox={`0 0 ${W} ${H}`}
+        className="w-full h-full overflow-visible"
+        preserveAspectRatio="none"
+        onMouseMove={handleMouseMove}
+        onMouseLeave={() => setHoveredIdx(null)}
+      >
+        <defs>
+          <linearGradient id="ag" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor={color} stopOpacity={0.35} />
+            <stop offset="100%" stopColor={color} stopOpacity={0} />
+          </linearGradient>
+        </defs>
+        <path d={area} fill="url(#ag)" />
+        <polyline
+          points={pts}
+          fill="none"
+          stroke={color}
+          strokeWidth="2"
+          strokeLinejoin="round"
+          strokeLinecap="round"
+        />
+
+        {hoveredIdx !== null && (
+          <>
+            <line
+              x1={px(hoveredIdx)}
+              y1={0}
+              x2={px(hoveredIdx)}
+              y2={H}
+              stroke="#e4e4e7"
+              strokeWidth="1.5"
+              strokeDasharray="2,2"
+            />
+            <circle
+              cx={px(hoveredIdx)}
+              cy={py(vals[hoveredIdx])}
+              r="4"
+              fill={color}
+              stroke="#ffffff"
+              strokeWidth="2"
+            />
+          </>
+        )}
+      </svg>
+
+      {hoveredIdx !== null && (
+        <div
+          className="absolute pointer-events-none bg-white/95 backdrop-blur-sm border border-zinc-200/80 rounded-xl p-3 shadow-xl text-zinc-800 text-[11px] space-y-1 transition-all duration-100 z-10 min-w-[120px]"
+          style={{
+            left: `${(px(hoveredIdx) / W) * 100}%`,
+            top: `${(py(vals[hoveredIdx]) / H) * 100}%`,
+            transform: "translate(-50%, -115%)",
+          }}
+        >
+          <div className="font-semibold text-zinc-500 text-[10px] tracking-wide uppercase">
+            {String(data[hoveredIdx].d ?? "")}
+          </div>
+          <div className="font-serif text-[13px] font-semibold text-zinc-900">
+            Rs {Number(data[hoveredIdx][valueKey]).toLocaleString()}
+          </div>
+          {data[hoveredIdx].orders !== undefined && (
+            <div className="text-zinc-600 text-[10px] flex items-center gap-1 mt-0.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-primary inline-block"></span>
+              <span>
+                {data[hoveredIdx].orders} {Number(data[hoveredIdx].orders) === 1 ? "order" : "orders"}
+              </span>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
   );
 }
