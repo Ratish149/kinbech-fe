@@ -1,12 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { ChevronDown, Menu, ShoppingCart, X } from "lucide-react";
-import { useState, useMemo } from "react";
+import { ChevronDown, Menu, ShoppingCart, X, User } from "lucide-react";
+import { useState, useMemo, useEffect } from "react";
 import { useCart } from "@/lib/cart";
 import { useCategories } from "@/lib/hooks/useCategories";
 import type { Category, Subcategory } from "@/lib/types/category";
 import { SearchSuggest } from "./SearchSuggest";
+import { getCurrentUser, clearTokens, type TokenPayload } from "@/lib/auth";
 
 export function Logo({ className = "" }: { className?: string }) {
   return (
@@ -30,6 +31,19 @@ export function Header() {
   const [menu, setMenu] = useState<null | "products" | "best" | "account">(null);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [mobileExpanded, setMobileExpanded] = useState<null | "products" | "best">(null);
+
+  const [currentUser, setCurrentUser] = useState<TokenPayload | null>(null);
+
+  useEffect(() => {
+    setCurrentUser(getCurrentUser());
+  }, []);
+
+  const handleLogout = () => {
+    clearTokens();
+    setCurrentUser(null);
+    window.location.reload();
+  };
+
 
   const { data: categories = [] as Category[], isLoading: loading } = useCategories();
   const { data: featuredCategories = [] as Category[], isLoading: loadingFeatured } = useCategories({ is_featured: true });
@@ -106,6 +120,57 @@ export function Header() {
                 </span>
               )}
             </Link>
+
+            {/* Account / User Icon */}
+            {currentUser ? (
+              <div className="relative" onMouseEnter={() => setMenu("account")} onMouseLeave={() => setMenu(null)}>
+                <button
+                  className="p-2 rounded-full hover:bg-muted flex items-center justify-center cursor-pointer text-zinc-700"
+                  aria-label="Account Menu"
+                >
+                  <div className="w-6 h-6 rounded-full bg-primary/10 text-primary text-[11px] font-bold flex items-center justify-center">
+                    {(currentUser.first_name?.[0] ?? currentUser.email?.[0] ?? "U").toUpperCase()}
+                  </div>
+                </button>
+
+                {menu === "account" && (
+                  <div className="absolute right-0 top-full bg-white border border-border shadow-md rounded-xl py-1.5 w-40 z-50 text-[13px] text-zinc-700">
+                    <div className="px-3 py-1 border-b border-border font-medium text-zinc-900 truncate">
+                      Hi, {currentUser.first_name || "User"}
+                    </div>
+                    <Link
+                      href="/profile"
+                      className="block px-3 py-1.5 hover:bg-muted text-zinc-800 transition-colors"
+                    >
+                      My Profile
+                    </Link>
+                    {currentUser.is_staff && (
+                      <Link
+                        href="/admin"
+                        className="block px-3 py-1.5 hover:bg-muted text-zinc-800 transition-colors"
+                      >
+                        Admin Portal
+                      </Link>
+                    )}
+                    <button
+                      onClick={handleLogout}
+                      className="w-full text-left px-3 py-1.5 hover:bg-red-50 text-red-600 transition-colors cursor-pointer"
+                    >
+                      Logout
+                    </button>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <Link
+                href="/login"
+                className="p-2 rounded-full hover:bg-muted flex items-center justify-center cursor-pointer text-zinc-700"
+                aria-label="Login"
+              >
+                <User size={18} />
+              </Link>
+            )}
+
 
             {/* Hamburger — mobile only */}
             <button
@@ -286,7 +351,35 @@ export function Header() {
           <Link href="/contact" className="flex items-center px-5 py-3 hover:bg-muted rounded-lg mx-2" onClick={closeMobile}>
             Contact
           </Link>
+
+          {/* Mobile Account / Login */}
+          {currentUser ? (
+            <div className="border-t border-border mt-2 pt-2">
+              <div className="px-5 py-2 text-[12px] text-muted-foreground">
+                Logged in as <span className="font-semibold text-zinc-800">{currentUser.first_name || currentUser.email}</span>
+              </div>
+              <Link href="/profile" className="flex items-center px-5 py-3 hover:bg-muted rounded-lg mx-2" onClick={closeMobile}>
+                My Profile
+              </Link>
+              {currentUser.is_staff && (
+                <Link href="/admin" className="flex items-center px-5 py-3 hover:bg-muted rounded-lg mx-2" onClick={closeMobile}>
+                  Admin Portal
+                </Link>
+              )}
+              <button
+                onClick={handleLogout}
+                className="w-[calc(100%-1rem)] flex items-center px-5 py-3 hover:bg-red-50 text-red-600 rounded-lg mx-2 text-left transition-colors cursor-pointer"
+              >
+                Logout
+              </button>
+            </div>
+          ) : (
+            <Link href="/login" className="flex items-center px-5 py-3 hover:bg-muted rounded-lg mx-2 border-t border-border mt-2" onClick={closeMobile}>
+              Login / Sign Up
+            </Link>
+          )}
         </nav>
+
       </aside>
     </>
   );
