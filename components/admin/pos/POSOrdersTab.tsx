@@ -6,9 +6,10 @@ import { useOrders } from "@/lib/hooks/useOrders";
 
 interface POSOrdersTabProps {
   onShowReceipt: (orderId: string) => void;
+  onShowDetails: (orderId: string) => void;
 }
 
-export default function POSOrdersTab({ onShowReceipt }: POSOrdersTabProps) {
+export default function POSOrdersTab({ onShowReceipt, onShowDetails }: POSOrdersTabProps) {
   const [orderSearch, setOrderSearch] = useState("");
   const [debouncedOrderSearch, setDebouncedOrderSearch] = useState("");
 
@@ -56,7 +57,7 @@ export default function POSOrdersTab({ onShowReceipt }: POSOrdersTabProps) {
             {posOrdersData.results.map((order) => (
               <div
                 key={order.id}
-                onClick={() => onShowReceipt(order.order_id)}
+                onClick={() => onShowDetails(order.order_id)}
                 className="bg-white border border-border rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:border-zinc-300 transition-all hover:shadow-sm cursor-pointer hover:bg-zinc-50/40"
               >
                 <div className="space-y-1">
@@ -97,17 +98,7 @@ export default function POSOrdersTab({ onShowReceipt }: POSOrdersTabProps) {
                     <p className="text-[10px] text-zinc-400 uppercase tracking-wider font-semibold">Total Amount</p>
                     <p className="text-[15px] font-bold font-serif text-primary">Rs. {order.total_amount}</p>
                   </div>
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onShowReceipt(order.order_id);
-                    }}
-                    className="bg-zinc-50 border border-zinc-200 hover:bg-zinc-100 text-zinc-700 rounded-xl px-3 py-2 text-[12px] font-bold transition-all flex items-center gap-1.5"
-                  >
-                    <Printer size={13} />
-                    Receipt
-                  </button>
+
                 </div>
               </div>
             ))}

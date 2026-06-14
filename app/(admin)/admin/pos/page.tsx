@@ -5,13 +5,14 @@ import { useState, useEffect } from "react";
 import type { Product } from "@/lib/products";
 import POSPaymentModal from "@/components/admin/pos/POSPaymentModal";
 import POSHeldOrdersModal, { HeldOrder } from "@/components/admin/pos/POSHeldOrdersModal";
-import POSOrderDetailsModal from "@/components/admin/pos/POSOrderDetailsModal";
 import POSOrdersTab from "@/components/admin/pos/POSOrdersTab";
 import POSProductsTab from "@/components/admin/pos/POSProductsTab";
 import POSCartSidebar from "@/components/admin/pos/POSCartSidebar";
 import { useCreateOrder } from "@/lib/hooks/useOrders";
 import type { UserProfile } from "@/lib/types/auth";
 import type { OrderInput } from "@/lib/types/order";
+import { SlideOver } from "@/components/admin/ui";
+import { OrderDetailView } from "@/components/admin/OrderDetailView";
 
 const paymentMethodMap: Record<string, string> = {
   cash: "COD",
@@ -36,6 +37,7 @@ export default function POSPage() {
   const [isHeldModalOpen, setIsHeldModalOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<"products" | "orders">("products");
   const [selectedReceiptOrderId, setSelectedReceiptOrderId] = useState<string | null>(null);
+  const [selectedDetailOrderId, setSelectedDetailOrderId] = useState<string | null>(null);
 
   const createOrderMutation = useCreateOrder();
 
@@ -184,7 +186,10 @@ export default function POSPage() {
         </div>
 
         {activeTab === "orders" ? (
-          <POSOrdersTab onShowReceipt={setSelectedReceiptOrderId} />
+          <POSOrdersTab
+            onShowReceipt={setSelectedReceiptOrderId}
+            onShowDetails={setSelectedDetailOrderId}
+          />
         ) : (
           <POSProductsTab onAddToCart={add} />
         )}
@@ -232,11 +237,19 @@ export default function POSPage() {
       onDelete={handleDeleteHeldOrder}
     />
 
-    <POSOrderDetailsModal
-      isOpen={!!selectedReceiptOrderId}
-      onClose={() => setSelectedReceiptOrderId(null)}
-      orderId={selectedReceiptOrderId}
-    />
+
+    <SlideOver
+      open={!!selectedDetailOrderId}
+      onClose={() => setSelectedDetailOrderId(null)}
+      title={`Order Details: ${selectedDetailOrderId ?? ""}`}
+    >
+      {selectedDetailOrderId && (
+        <OrderDetailView
+          orderId={selectedDetailOrderId}
+          onClose={() => setSelectedDetailOrderId(null)}
+        />
+      )}
+    </SlideOver>
   </>
   );
 }
