@@ -8,6 +8,7 @@ export type OrderFilters = {
   payment_method?: string;
   is_paid?: boolean;
   is_pos_order?: boolean;
+  user?: number;
   search?: string;
   page?: number;
   page_size?: number;
@@ -33,6 +34,9 @@ export async function fetchOrders(filters?: OrderFilters): Promise<PaginatedOrde
     }
     if (filters.is_pos_order !== undefined) {
       params.append("is_pos_order", String(filters.is_pos_order));
+    }
+    if (filters.user !== undefined) {
+      params.append("user", String(filters.user));
     }
     if (filters.search) {
       params.append("search", filters.search);

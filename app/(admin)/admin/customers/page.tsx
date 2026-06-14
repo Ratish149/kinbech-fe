@@ -1,162 +1,110 @@
 "use client";
 
-import { useState } from "react";
-import { Badge, Field, PageHead, SlideOver, Table, useModal } from "@/components/admin/ui";
-
-type Customer = {
-  id: string;
-  name: string;
-  phone: string;
-  orders: number;
-  spent: number;
-  tier: "Regular" | "Frequent" | "VIP";
-  points: number;
-};
-
-const NAMES = [
-  "Pratima Rai",
-  "Bibek Karki",
-  "Anjali Thapa",
-  "Niraj Maharjan",
-  "Sushma Poudel",
-  "Anita Gurung",
-  "Sandeep K.C.",
-  "Ramesh Adhikari",
-];
-
-const ROWS: Customer[] = NAMES.map((n, i) => ({
-  id: "C" + (1000 + i),
-  name: n,
-  phone: "+977 98" + (20000000 + i * 134),
-  orders: 3 + (i * 7) % 40,
-  spent: 4000 + (i * 1247) % 60000,
-  tier: i % 7 === 0 ? "VIP" : i % 3 === 0 ? "Frequent" : "Regular",
-  points: 100 + (i * 87) % 2000,
-}));
-
-function tierTone(t: string): "success" | "info" | "default" {
-  if (t === "VIP") return "success";
-  if (t === "Frequent") return "info";
-  return "default";
-}
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { PageHead } from "@/components/admin/ui";
+import { useCustomers } from "@/lib/hooks/useCustomers";
+import { CustomerTable } from "@/components/admin/customers/CustomerTable";
+import { Loader2, Search, AlertTriangle } from "lucide-react";
 
 export default function CustomersPage() {
-  const modal = useModal<Customer>();
-  const [search, setSearch] = useState("");
+  const router = useRouter();
+  const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [page, setPage] = useState(1);
 
-  const filtered = ROWS.filter(
-    (c) =>
-      c.name.toLowerCase().includes(search.toLowerCase()) ||
-      c.phone.includes(search)
-  );
+  // Debounce search input
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearch(searchQuery);
+      setPage(1);
+    }, 300);
+    return () => clearTimeout(handler);
+  }, [searchQuery]);
+
+  const {
+    data: paginatedData,
+    isLoading,
+    error: loadError,
+  } = useCustomers({
+    search: debouncedSearch || undefined,
+    page: page,
+    page_size: 15,
+  });
+
+  const customers = paginatedData?.results ?? [];
+  const count = paginatedData?.count ?? 0;
+  const totalPages = paginatedData?.total_pages ?? 1;
+
+  const error = loadError ? (loadError as Error).message : null;
 
   return (
-    <div>
-      <PageHead title="Customers" subtitle={`${ROWS.length} active`} />
+    <div className="space-y-5">
+      <PageHead title="Customers" subtitle={`${count} total customers`} />
 
-      {/* Search bar */}
-      <div className="bg-white border border-border rounded-xl p-4 mb-4 flex items-center gap-3">
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          width="16"
-          height="16"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          className="text-muted-foreground"
-        >
-          <circle cx="11" cy="11" r="8" />
-          <path d="m21 21-4.35-4.35" />
-        </svg>
-        <input
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="Search by name or phone…"
-          className="flex-1 outline-none text-[14px]"
-        />
+      {/* Search Bar */}
+      <div className="bg-white border border-border rounded-xl p-4 flex flex-col sm:flex-row gap-3 items-center justify-between">
+        <div className="flex items-center bg-cream border border-border rounded-full px-4 py-1.5 w-full sm:max-w-xs shrink-0">
+          <Search size={15} className="text-muted-foreground shrink-0" />
+          <input
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search by name, phone or email..."
+            className="ml-2 flex-1 outline-none text-[13px] bg-transparent"
+          />
+        </div>
       </div>
 
-      <Table
-        rows={filtered}
-        onRowClick={modal.openWith}
-        columns={[
-          { key: "name", label: "Name" },
-          { key: "phone", label: "Phone" },
-          { key: "orders", label: "Orders" },
-          {
-            key: "spent",
-            label: "Spent",
-            render: (c) => `Rs ${c.spent.toLocaleString()}`,
-          },
-          { key: "points", label: "Points" },
-          {
-            key: "tier",
-            label: "Tier",
-            render: (c) => <Badge tone={tierTone(c.tier)}>{c.tier}</Badge>,
-          },
-        ]}
-      />
-
-      <SlideOver open={modal.open} onClose={modal.close} title={modal.item?.name ?? ""}>
-        {modal.item && (
-          <div className="space-y-5">
-            {/* Avatar */}
-            <div className="flex items-center gap-4">
-              <div className="w-14 h-14 rounded-full bg-primary/10 text-primary text-xl font-semibold flex items-center justify-center">
-                {modal.item.name[0]}
-              </div>
-              <div>
-                <p className="font-semibold">{modal.item.name}</p>
-                <Badge tone={tierTone(modal.item.tier)}>{modal.item.tier} Customer</Badge>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4 text-[13px]">
-              <Field label="Customer ID"><p className="font-mono">{modal.item.id}</p></Field>
-              <Field label="Phone"><p>{modal.item.phone}</p></Field>
-              <Field label="Total orders"><p>{modal.item.orders}</p></Field>
-              <Field label="Lifetime spend">
-                <p>Rs {modal.item.spent.toLocaleString()}</p>
-              </Field>
-              <Field label="Loyalty points">
-                <div className="flex items-center gap-2">
-                  <span className="text-lg font-semibold text-primary">{modal.item.points}</span>
-                  <span className="text-[11px] text-muted-foreground">pts</span>
-                </div>
-              </Field>
-            </div>
-
-            <Field label="Notes">
-              <textarea
-                rows={4}
-                placeholder="Add a note about this customer…"
-                className="w-full border border-border rounded-lg px-3 py-2 text-[13px] focus:outline-none focus:ring-2 focus:ring-primary/20"
-              />
-            </Field>
-
-            <div>
-              <p className="text-[11px] text-muted-foreground uppercase tracking-widest mb-2">
-                Recent purchases
-              </p>
-              <ul className="text-[13px] space-y-2">
-                {["Fresh Mutton Curry Cut", "Wild Honey", "Pure Cow Ghee"].map((p) => (
-                  <li key={p} className="flex justify-between py-2 border-b border-border last:border-0">
-                    <span>{p}</span>
-                    <span className="text-muted-foreground">2 days ago</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            <button className="bg-primary text-white rounded-full px-5 py-2 text-[13px] hover:opacity-90 transition-opacity">
-              Save note
-            </button>
+      {error && (
+        <div className="bg-red-50 border border-red-200 rounded-xl p-4 flex items-start gap-3 text-red-800 text-[13px]">
+          <AlertTriangle size={18} className="shrink-0 text-red-600 mt-0.5" />
+          <div>
+            <p className="font-semibold">Backend Connection Issue</p>
+            <p className="mt-1 text-red-700/95">{error}</p>
           </div>
-        )}
-      </SlideOver>
+        </div>
+      )}
+
+      {/* Customers Table */}
+      {isLoading ? (
+        <div className="flex flex-col items-center justify-center py-24 gap-3 bg-white border border-border rounded-xl">
+          <Loader2 className="animate-spin text-primary" size={28} />
+          <p className="text-[13px] text-muted-foreground font-medium">Loading customers from database…</p>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          <CustomerTable
+            customers={customers}
+            onSelectCustomer={(c) => router.push(`/admin/customers/${c.id}`)}
+          />
+
+          {/* Pagination Controls */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between bg-white border border-border rounded-xl px-4 py-3">
+              <div className="text-[12px] text-muted-foreground">
+                Showing page <span className="font-semibold">{page}</span> of{" "}
+                <span className="font-semibold">{totalPages}</span>
+              </div>
+              <div className="flex gap-2">
+                <button
+                  disabled={page <= 1}
+                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                  className="px-3 py-1.5 rounded-lg text-[12px] font-semibold bg-cream hover:bg-zinc-100 disabled:opacity-50 disabled:pointer-events-none transition cursor-pointer border"
+                >
+                  Previous
+                </button>
+                <button
+                  disabled={page >= totalPages}
+                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                  className="px-3 py-1.5 rounded-lg text-[12px] font-semibold bg-cream hover:bg-zinc-100 disabled:opacity-50 disabled:pointer-events-none transition cursor-pointer border"
+                >
+                  Next
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
